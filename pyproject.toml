@@ -5,14 +5,14 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "cloudviz"
 version = "1.0.0"
-description = "Multi-cloud infrastructure visualization platform"
+description = "Multi-cloud infrastructure visualization platform with REST API and Mermaid diagram generation"
 readme = "README.md"
 license = {file = "LICENSE"}
 authors = [
     {name = "CloudViz Team", email = "team@cloudviz.com"},
 ]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Intended Audience :: System Administrators",
     "License :: OSI Approved :: MIT License",
@@ -22,11 +22,14 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Topic :: System :: Systems Administration",
     "Topic :: System :: Monitoring",
     "Topic :: Scientific/Engineering :: Visualization",
+    "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-keywords = ["cloud", "visualization", "azure", "aws", "gcp", "infrastructure", "diagram"]
+keywords = ["cloud", "visualization", "azure", "aws", "gcp", "infrastructure", "diagram", "mermaid", "api", "rest", "n8n", "automation"]
 requires-python = ">=3.8"
 dependencies = [
     "fastapi>=0.104.0,<1.0.0",

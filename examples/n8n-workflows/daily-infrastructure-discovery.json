@@ -1,0 +1,311 @@
+{
+  "name": "CloudViz Daily Infrastructure Discovery",
+  "description": "Automated daily infrastructure discovery and diagram generation",
+  "version": "1.0.0",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "value": 24
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Daily Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.CLOUDVIZ_API_URL}}/api/v1/auth/login",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "username",
+              "value": "={{$env.CLOUDVIZ_USERNAME}}"
+            },
+            {
+              "name": "password",
+              "value": "={{$env.CLOUDVIZ_PASSWORD}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cloudviz-auth",
+      "name": "CloudViz Authentication",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [440, 300],
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "url": "={{$env.CLOUDVIZ_API_URL}}/api/v1/extract/azure",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$node['CloudViz Authentication'].json.access_token}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "subscription_id",
+              "value": "={{$env.AZURE_SUBSCRIPTION_ID}}"
+            },
+            {
+              "name": "webhook_url",
+              "value": "={{$env.N8N_WEBHOOK_URL}}/extraction-complete"
+            },
+            {
+              "name": "resource_types",
+              "value": "[\"VirtualMachine\", \"Database\", \"StorageAccount\", \"VirtualNetwork\", \"LoadBalancer\"]"
+            }
+          ]
+        }
+      },
+      "id": "start-extraction",
+      "name": "Start Azure Extraction",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [660, 300]
+    },
+    {
+      "parameters": {
+        "path": "extraction-complete"
+      },
+      "id": "extraction-webhook",
+      "name": "Extraction Complete Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [880, 300],
+      "webhookId": "extraction-complete"
+    },
+    {
+      "parameters": {
+        "url": "={{$env.CLOUDVIZ_API_URL}}/api/v1/visualize/mermaid",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$node['CloudViz Authentication'].json.access_token}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "inventory_id",
+              "value": "={{$json.inventory_id}}"
+            },
+            {
+              "name": "theme",
+              "value": "professional"
+            },
+            {
+              "name": "layout",
+              "value": "hierarchical"
+            },
+            {
+              "name": "include_metadata",
+              "value": "true"
+            }
+          ]
+        }
+      },
+      "id": "generate-mermaid",
+      "name": "Generate Mermaid Diagram",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1100, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.CLOUDVIZ_API_URL}}/api/v1/visualize/render",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$node['CloudViz Authentication'].json.access_token}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "mermaid_code",
+              "value": "={{$node['Generate Mermaid Diagram'].json.mermaid_code}}"
+            },
+            {
+              "name": "format",
+              "value": "png"
+            },
+            {
+              "name": "width",
+              "value": "1920"
+            },
+            {
+              "name": "height",
+              "value": "1080"
+            },
+            {
+              "name": "background_color",
+              "value": "white"
+            }
+          ]
+        },
+        "responseFormat": "binaryData"
+      },
+      "id": "render-image",
+      "name": "Render PNG Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1320, 300]
+    },
+    {
+      "parameters": {
+        "fileName": "infrastructure-diagram-{{DateTime.now().toISODate()}}.md",
+        "data": "# Infrastructure Diagram\n\nGenerated on: {{DateTime.now().toISO()}}\nResource Count: {{$node['Generate Mermaid Diagram'].json.metadata.resource_count}}\n\n```mermaid\n{{$node['Generate Mermaid Diagram'].json.mermaid_code}}\n```"
+      },
+      "id": "save-mermaid-file",
+      "name": "Save Mermaid File",
+      "type": "n8n-nodes-base.writeFile",
+      "typeVersion": 1,
+      "position": [1540, 200]
+    },
+    {
+      "parameters": {
+        "fileName": "infrastructure-diagram-{{DateTime.now().toISODate()}}.png",
+        "data": "={{$node['Render PNG Image'].binary.data}}"
+      },
+      "id": "save-image-file",
+      "name": "Save PNG File",
+      "type": "n8n-nodes-base.writeFile",
+      "typeVersion": 1,
+      "position": [1540, 400]
+    }
+  ],
+  "connections": {
+    "Daily Schedule": {
+      "main": [
+        [
+          {
+            "node": "CloudViz Authentication",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CloudViz Authentication": {
+      "main": [
+        [
+          {
+            "node": "Start Azure Extraction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start Azure Extraction": {
+      "main": [
+        [
+          {
+            "node": "Extraction Complete Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraction Complete Webhook": {
+      "main": [
+        [
+          {
+            "node": "Generate Mermaid Diagram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Mermaid Diagram": {
+      "main": [
+        [
+          {
+            "node": "Render PNG Image",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Save Mermaid File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Render PNG Image": {
+      "main": [
+        [
+          {
+            "node": "Save PNG File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "1",
+  "meta": {
+    "instanceId": "cloudviz-infrastructure-discovery"
+  },
+  "tags": [
+    {
+      "createdAt": "2025-09-19T10:00:00.000Z",
+      "updatedAt": "2025-09-19T10:00:00.000Z",
+      "id": "cloudviz",
+      "name": "CloudViz"
+    }
+  ]
+}

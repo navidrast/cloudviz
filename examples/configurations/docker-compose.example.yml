@@ -1,0 +1,188 @@
+version: '3.8'
+
+services:
+  # CloudViz API Server
+  cloudviz-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cloudviz-api
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=postgresql://cloudviz:cloudviz@postgres:5432/cloudviz
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    networks:
+      - cloudviz-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: cloudviz-postgres
+    environment:
+      - POSTGRES_DB=cloudviz
+      - POSTGRES_USER=cloudviz
+      - POSTGRES_PASSWORD=cloudviz
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    networks:
+      - cloudviz-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cloudviz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: cloudviz-redis
+    volumes:
+      - redis_data:/data
+    networks:
+      - cloudviz-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: cloudviz-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - ./static:/var/www/static:ro
+    depends_on:
+      - cloudviz-api
+    networks:
+      - cloudviz-network
+    restart: unless-stopped
+
+  # Mermaid Rendering Service
+  mermaid-renderer:
+    image: ghcr.io/mermaidjs/mermaid-cli:latest
+    container_name: cloudviz-mermaid
+    environment:
+      - PUPPETEER_ARGS=--no-sandbox --disable-setuid-sandbox
+    networks:
+      - cloudviz-network
+    restart: unless-stopped
+
+  # Background Job Worker (optional)
+  cloudviz-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cloudviz-worker
+    command: ["python", "-m", "celery", "worker", "-A", "app.celery", "--loglevel=info"]
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=postgresql://cloudviz:cloudviz@postgres:5432/cloudviz
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    networks:
+      - cloudviz-network
+    restart: unless-stopped
+
+  # Monitoring Stack (optional)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: cloudviz-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - cloudviz-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: cloudviz-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    depends_on:
+      - prometheus
+    networks:
+      - cloudviz-network
+    restart: unless-stopped
+
+  # Elasticsearch for Logging (optional)
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.0
+    container_name: cloudviz-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - cloudviz-network
+    restart: unless-stopped
+
+  # Kibana for Log Visualization (optional)
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.10.0
+    container_name: cloudviz-kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    networks:
+      - cloudviz-network
+    restart: unless-stopped
+
+networks:
+  cloudviz-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  elasticsearch_data:
+    driver: local

@@ -1,0 +1,354 @@
+{
+  "name": "CloudViz Incident Response Diagram",
+  "description": "Generate infrastructure diagrams when incidents are detected",
+  "version": "1.0.0",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "incident-alert",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "incident-webhook",
+      "name": "Incident Alert Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [220, 300],
+      "webhookId": "incident-alert"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.severity}}",
+              "operation": "equal",
+              "value2": "high"
+            }
+          ]
+        }
+      },
+      "id": "check-severity",
+      "name": "Check Severity",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.CLOUDVIZ_API_URL}}/api/v1/auth/login",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "username",
+              "value": "={{$env.CLOUDVIZ_USERNAME}}"
+            },
+            {
+              "name": "password",
+              "value": "={{$env.CLOUDVIZ_PASSWORD}}"
+            }
+          ]
+        }
+      },
+      "id": "cloudviz-auth",
+      "name": "CloudViz Authentication",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [660, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.CLOUDVIZ_API_URL}}/api/v1/extract/resource",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$node['CloudViz Authentication'].json.access_token}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "resource_id",
+              "value": "={{$json.resource_id}}"
+            },
+            {
+              "name": "include_dependencies",
+              "value": "true"
+            },
+            {
+              "name": "depth",
+              "value": "3"
+            }
+          ]
+        }
+      },
+      "id": "extract-affected-resources",
+      "name": "Extract Affected Resources",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [880, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.CLOUDVIZ_API_URL}}/api/v1/visualize/mermaid",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$node['CloudViz Authentication'].json.access_token}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "inventory_id",
+              "value": "={{$node['Extract Affected Resources'].json.inventory_id}}"
+            },
+            {
+              "name": "theme",
+              "value": "alert"
+            },
+            {
+              "name": "layout",
+              "value": "focused"
+            },
+            {
+              "name": "highlight_resources",
+              "value": "[\"{{$json.resource_id}}\"]"
+            },
+            {
+              "name": "annotations",
+              "value": "{\"{{$json.resource_id}}\": \"INCIDENT: {{$json.incident_type}}\"}"
+            }
+          ]
+        }
+      },
+      "id": "generate-incident-diagram",
+      "name": "Generate Incident Diagram",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1100, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.SLACK_WEBHOOK_URL}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "🚨 *High Severity Incident Detected*\n\n*Resource:* {{$json.resource_id}}\n*Type:* {{$json.incident_type}}\n*Time:* {{DateTime.now().toISO()}}\n\n*Infrastructure Diagram:*\n```mermaid\n{{$node['Generate Incident Diagram'].json.mermaid_code}}\n```"
+            }
+          ]
+        }
+      },
+      "id": "notify-slack",
+      "name": "Notify Slack",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1320, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.CLOUDVIZ_API_URL}}/api/v1/visualize/render",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$node['CloudViz Authentication'].json.access_token}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "mermaid_code",
+              "value": "={{$node['Generate Incident Diagram'].json.mermaid_code}}"
+            },
+            {
+              "name": "format",
+              "value": "svg"
+            },
+            {
+              "name": "theme",
+              "value": "alert"
+            }
+          ]
+        },
+        "responseFormat": "binaryData"
+      },
+      "id": "render-incident-svg",
+      "name": "Render Incident SVG",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1320, 400]
+    },
+    {
+      "parameters": {
+        "to": "{{$env.INCIDENT_EMAIL}}",
+        "subject": "🚨 Critical Infrastructure Incident - {{$json.resource_id}}",
+        "text": "A critical incident has been detected in your infrastructure.\n\nResource: {{$json.resource_id}}\nIncident Type: {{$json.incident_type}}\nSeverity: {{$json.severity}}\nTime: {{DateTime.now().toISO()}}\n\nPlease see attached infrastructure diagram for impact analysis.",
+        "attachments": [
+          {
+            "propertyName": "diagram",
+            "fileName": "incident-diagram-{{DateTime.now().toISODate()}}.svg"
+          }
+        ]
+      },
+      "id": "send-incident-email",
+      "name": "Send Incident Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [1540, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"status\": \"processed\", \"incident_id\": \"{{$json.incident_id}}\", \"diagram_generated\": true, \"notifications_sent\": true}"
+      },
+      "id": "response-node",
+      "name": "Incident Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1760, 300]
+    }
+  ],
+  "connections": {
+    "Incident Alert Webhook": {
+      "main": [
+        [
+          {
+            "node": "Check Severity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Severity": {
+      "main": [
+        [
+          {
+            "node": "CloudViz Authentication",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CloudViz Authentication": {
+      "main": [
+        [
+          {
+            "node": "Extract Affected Resources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Affected Resources": {
+      "main": [
+        [
+          {
+            "node": "Generate Incident Diagram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Incident Diagram": {
+      "main": [
+        [
+          {
+            "node": "Notify Slack",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Render Incident SVG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Render Incident SVG": {
+      "main": [
+        [
+          {
+            "node": "Send Incident Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Incident Email": {
+      "main": [
+        [
+          {
+            "node": "Incident Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "1",
+  "meta": {
+    "instanceId": "cloudviz-incident-response"
+  },
+  "tags": [
+    {
+      "createdAt": "2025-09-19T10:00:00.000Z",
+      "updatedAt": "2025-09-19T10:00:00.000Z",
+      "id": "cloudviz",
+      "name": "CloudViz"
+    }
+  ]
+}

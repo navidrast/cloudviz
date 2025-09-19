@@ -1,0 +1,441 @@
+---
+# CloudViz Kubernetes Deployment Example
+# This configuration deploys CloudViz with PostgreSQL, Redis, and monitoring
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cloudviz
+  labels:
+    name: cloudviz
+
+---
+# ConfigMap for CloudViz Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudviz-config
+  namespace: cloudviz
+data:
+  ENVIRONMENT: "production"
+  HOST: "0.0.0.0"
+  PORT: "8000"
+  LOG_LEVEL: "INFO"
+  DATABASE_URL: "postgresql://cloudviz:cloudviz@postgres:5432/cloudviz"
+  REDIS_URL: "redis://redis:6379/0"
+  MERMAID_DEFAULT_THEME: "professional"
+  MERMAID_DEFAULT_LAYOUT: "hierarchical"
+
+---
+# Secret for sensitive configuration
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cloudviz-secrets
+  namespace: cloudviz
+type: Opaque
+stringData:
+  SECRET_KEY: "your-super-secret-key-change-this"
+  JWT_SECRET_KEY: "your-jwt-secret-key-change-this"
+  AZURE_CLIENT_SECRET: "your-azure-client-secret"
+  AWS_SECRET_ACCESS_KEY: "your-aws-secret-key"
+
+---
+# PostgreSQL Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: cloudviz
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        env:
+        - name: POSTGRES_DB
+          value: cloudviz
+        - name: POSTGRES_USER
+          value: cloudviz
+        - name: POSTGRES_PASSWORD
+          value: cloudviz
+        ports:
+        - containerPort: 5432
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - cloudviz
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - cloudviz
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: postgres-pvc
+
+---
+# PostgreSQL Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: cloudviz
+spec:
+  selector:
+    app: postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
+
+---
+# PostgreSQL PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: cloudviz
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+# Redis Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: cloudviz
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        ports:
+        - containerPort: 6379
+        volumeMounts:
+        - name: redis-storage
+          mountPath: /data
+        livenessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: redis-storage
+        persistentVolumeClaim:
+          claimName: redis-pvc
+
+---
+# Redis Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: cloudviz
+spec:
+  selector:
+    app: redis
+  ports:
+  - port: 6379
+    targetPort: 6379
+
+---
+# Redis PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-pvc
+  namespace: cloudviz
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+
+---
+# CloudViz API Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudviz-api
+  namespace: cloudviz
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: cloudviz-api
+  template:
+    metadata:
+      labels:
+        app: cloudviz-api
+    spec:
+      containers:
+      - name: cloudviz-api
+        image: cloudviz/api:latest
+        ports:
+        - containerPort: 8000
+        envFrom:
+        - configMapRef:
+            name: cloudviz-config
+        - secretRef:
+            name: cloudviz-secrets
+        volumeMounts:
+        - name: uploads-storage
+          mountPath: /app/uploads
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+      volumes:
+      - name: uploads-storage
+        persistentVolumeClaim:
+          claimName: uploads-pvc
+
+---
+# CloudViz API Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloudviz-api
+  namespace: cloudviz
+spec:
+  selector:
+    app: cloudviz-api
+  ports:
+  - port: 8000
+    targetPort: 8000
+  type: ClusterIP
+
+---
+# Uploads PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: uploads-pvc
+  namespace: cloudviz
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 20Gi
+
+---
+# CloudViz Worker Deployment (for background jobs)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudviz-worker
+  namespace: cloudviz
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cloudviz-worker
+  template:
+    metadata:
+      labels:
+        app: cloudviz-worker
+    spec:
+      containers:
+      - name: cloudviz-worker
+        image: cloudviz/api:latest
+        command: ["python", "-m", "celery", "worker", "-A", "app.celery", "--loglevel=info"]
+        envFrom:
+        - configMapRef:
+            name: cloudviz-config
+        - secretRef:
+            name: cloudviz-secrets
+        env:
+        - name: CELERY_BROKER_URL
+          value: "redis://redis:6379/1"
+        volumeMounts:
+        - name: uploads-storage
+          mountPath: /app/uploads
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "125m"
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+      volumes:
+      - name: uploads-storage
+        persistentVolumeClaim:
+          claimName: uploads-pvc
+
+---
+# Ingress for external access
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cloudviz-ingress
+  namespace: cloudviz
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  tls:
+  - hosts:
+    - cloudviz.your-domain.com
+    secretName: cloudviz-tls
+  rules:
+  - host: cloudviz.your-domain.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: cloudviz-api
+            port:
+              number: 8000
+
+---
+# HorizontalPodAutoscaler for API
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: cloudviz-api-hpa
+  namespace: cloudviz
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: cloudviz-api
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+
+---
+# ServiceMonitor for Prometheus (if using Prometheus Operator)
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: cloudviz-metrics
+  namespace: cloudviz
+spec:
+  selector:
+    matchLabels:
+      app: cloudviz-api
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+
+---
+# NetworkPolicy for security
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cloudviz-network-policy
+  namespace: cloudviz
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+  - from:
+    - podSelector:
+        matchLabels:
+          app: cloudviz-api
+  - from:
+    - podSelector:
+        matchLabels:
+          app: cloudviz-worker
+  egress:
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 53
+    - protocol: UDP
+      port: 53
+  - to:
+    - podSelector:
+        matchLabels:
+          app: postgres
+    ports:
+    - protocol: TCP
+      port: 5432
+  - to:
+    - podSelector:
+        matchLabels:
+          app: redis
+    ports:
+    - protocol: TCP
+      port: 6379

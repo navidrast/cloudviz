@@ -5,7 +5,7 @@ Provides encryption, hashing, token generation and validation utilities.
 
 import hashlib
 import secrets
-import jwt
+from jose import jwt
 from typing import Optional, Dict, Any
 from datetime import datetime, timedelta
 from cryptography.fernet import Fernet
