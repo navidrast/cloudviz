@@ -414,13 +414,4 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🆘 **Support**
-
-- 📧 **Email**: support@cloudviz.io
-- 💬 **Discord**: [CloudViz Community](https://discord.gg/cloudviz)
-- 📖 **Documentation**: [docs.cloudviz.io](https://docs.cloudviz.io)
-- 🐛 **Issues**: [GitHub Issues](https://github.com/navidrast/cloudviz/issues)
-
----
-
-**CloudViz** - *Visualizing Infrastructure, Simplifying Complexity* 🌩️
+�️
