@@ -147,12 +147,8 @@ async def error_handling_middleware(request: Request, call_next):
         # Unexpected server errors
         correlation_id = getattr(request.state, 'correlation_id', 'unknown')
         
-        logger.error("Unhandled exception occurred",
-                    exc_info=True,
-                    error=str(e),
-                    correlation_id=correlation_id,
-                    path=request.url.path,
-                    method=request.method)
+        logger.error("Unhandled exception occurred: %s [correlation_id=%s, path=%s, method=%s]", 
+                    str(e), correlation_id, request.url.path, request.method, exc_info=True)
         
         error_response = APIError(
             error="Internal Server Error",

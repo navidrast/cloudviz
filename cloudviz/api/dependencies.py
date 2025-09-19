@@ -20,7 +20,7 @@ def get_current_config() -> CloudVizConfig:
         # or get it from the application state
         return CloudVizConfig()
     except Exception as e:
-        logger.error("Failed to load configuration", exc_info=True, error=str(e))
+        logger.error("Failed to load configuration: %s", str(e), exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Configuration error"

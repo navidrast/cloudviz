@@ -71,7 +71,7 @@ async def health_check(config: CloudVizConfig = Depends(get_current_config)):
         return response
         
     except Exception as e:
-        logger.error("Health check failed", exc_info=True, error=str(e))
+        logger.error("Health check failed: %s", str(e), exc_info=True)
         raise HTTPException(status_code=503, detail="Health check failed")
 
 
@@ -121,7 +121,7 @@ async def readiness_check(config: CloudVizConfig = Depends(get_current_config)):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error("Readiness check failed", exc_info=True, error=str(e))
+        logger.error("Readiness check failed: %s", str(e), exc_info=True)
         raise HTTPException(status_code=503, detail="Readiness check failed")
 
 

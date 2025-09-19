@@ -275,7 +275,7 @@ async def render_diagram(
         return response
         
     except Exception as e:
-        logger.error("Failed to start rendering", exc_info=True, error=str(e))
+        logger.error("Failed to start rendering: %s", str(e), exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to start rendering"

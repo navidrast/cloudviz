@@ -104,7 +104,7 @@ async def get_system_metrics(
         return metrics
         
     except Exception as e:
-        logger.error("Failed to get system metrics", exc_info=True, error=str(e))
+        logger.error("Failed to get system metrics: %s", str(e), exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve system metrics"
@@ -163,7 +163,7 @@ async def cleanup_old_jobs(
         }
         
     except Exception as e:
-        logger.error("Job cleanup failed", exc_info=True, error=str(e))
+        logger.error("Job cleanup failed: %s", str(e), exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Job cleanup failed"

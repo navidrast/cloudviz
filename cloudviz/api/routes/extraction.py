@@ -223,7 +223,7 @@ async def extract_resources(
         return response
         
     except Exception as e:
-        logger.error("Failed to start extraction", exc_info=True, error=str(e))
+        logger.error("Failed to start extraction: %s", str(e), exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to start extraction"

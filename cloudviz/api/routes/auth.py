@@ -120,7 +120,7 @@ def get_current_user(
         return user
         
     except Exception as e:
-        logger.warning("Token validation failed", error=str(e))
+        logger.warning("Token validation failed: %s", str(e))
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token"
@@ -176,7 +176,7 @@ async def login(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error("Login failed", exc_info=True, error=str(e))
+        logger.error("Login failed: %s", str(e), exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Login failed"
@@ -222,7 +222,7 @@ async def validate_token_endpoint(
         )
         
     except Exception as e:
-        logger.error("Token validation failed", exc_info=True, error=str(e))
+        logger.error("Token validation failed: %s", str(e), exc_info=True)
         return TokenValidationResponse(valid=False)
 
 
