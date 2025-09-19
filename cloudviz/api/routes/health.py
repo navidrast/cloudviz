@@ -5,7 +5,6 @@ Provides system health monitoring and readiness checks.
 
 from typing import Dict, Any
 from datetime import datetime
-import asyncio
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -97,7 +96,7 @@ async def readiness_check(config: CloudVizConfig = Depends(get_current_config)):
         
         try:
             # Could add cache connectivity check  
-            services["cache"] = "ready" if not config.cache.enabled else "not_ready"
+            services["cache"] = "ready" if config.cache.enabled else "not_ready"
         except Exception:
             services["cache"] = "not_ready"
         

@@ -3,16 +3,12 @@ CloudViz REST API Main Application
 FastAPI-based REST API for cloud infrastructure visualization
 """
 
-import os
-import logging
 from contextlib import asynccontextmanager
 from typing import Dict, Any
 
-from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.security import HTTPBearer
-from fastapi.responses import JSONResponse
 import uvicorn
 
 from cloudviz.core.config import CloudVizConfig
@@ -29,7 +25,6 @@ from cloudviz.api.middleware import (
     rate_limiting_middleware,
     error_handling_middleware
 )
-from cloudviz.api.dependencies import get_current_config
 
 
 logger = get_logger(__name__)
