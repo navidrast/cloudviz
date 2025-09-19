@@ -1,0 +1,98 @@
+# Production Environment Configuration
+api:
+  debug: false
+  host: "0.0.0.0"
+  port: 8000
+  reload: false
+  workers: 4
+  cors_origins: ["https://cloudviz.example.com"]
+  
+database:
+  url: "${DATABASE_URL}"
+  echo: false
+  pool_size: 20
+  pool_timeout: 30
+  pool_recycle: 3600
+  
+logging:
+  level: "WARNING"
+  format: "json"
+  file: "logs/cloudviz_prod.log"
+  rotation: "500 MB"
+  retention: "90 days"
+
+cache:
+  enabled: true
+  backend: "redis"
+  url: "${REDIS_URL}"
+  ttl: 3600
+  max_connections: 20
+
+visualization:
+  cache_enabled: true
+  cache_ttl: 7200
+  output_dir: "/app/output"
+  include_metadata: true
+  timestamp_files: true
+  max_diagram_size_mb: 200
+  cleanup_interval_hours: 12
+
+security:
+  jwt_secret_key: "${JWT_SECRET_KEY}"
+  jwt_expiry_hours: 4
+  rate_limit_enabled: true
+  rate_limit_requests: 1000
+  rate_limit_window: 60
+  rate_limit_burst: 100
+  
+providers:
+  azure:
+    timeout: 1200
+    retry_attempts: 3
+    cache_ttl: 3600
+    parallel_requests: 20
+    batch_size: 100
+    
+  aws:
+    timeout: 1200
+    retry_attempts: 3
+    cache_ttl: 3600
+    parallel_requests: 20
+    batch_size: 100
+    
+  gcp:
+    timeout: 1200
+    retry_attempts: 3
+    cache_ttl: 3600
+    parallel_requests: 20
+    batch_size: 100
+
+external_tools:
+  graphviz_path: "/usr/bin/dot"
+  mermaid_cli_path: "/usr/local/bin/mmdc"
+  check_dependencies: true
+  timeout: 300
+
+monitoring:
+  enabled: true
+  metrics_endpoint: "/metrics"
+  health_endpoint: "/health"
+  prometheus_enabled: true
+  jaeger_enabled: true
+  
+storage:
+  cloud_export_enabled: true
+  default_provider: "azure"
+  encryption_enabled: true
+  backup_enabled: true
+  
+notifications:
+  enabled: true
+  slack_webhook: "${SLACK_WEBHOOK_URL}"
+  email_enabled: true
+  email_smtp_server: "${SMTP_SERVER}"
+  
+performance:
+  max_concurrent_extractions: 5
+  extraction_timeout: 3600
+  memory_limit_mb: 2048

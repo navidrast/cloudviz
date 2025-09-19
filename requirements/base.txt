@@ -1,0 +1,37 @@
+# Core dependencies for CloudViz
+fastapi>=0.104.0,<1.0.0
+uvicorn[standard]>=0.24.0,<1.0.0
+pydantic>=2.4.0,<3.0.0
+pydantic-settings>=2.0.0,<3.0.0
+httpx>=0.25.0,<1.0.0
+aiofiles>=23.2.0,<24.0.0
+python-multipart>=0.0.6,<1.0.0
+python-jose[cryptography]>=3.3.0,<4.0.0
+passlib[bcrypt]>=1.7.4,<2.0.0
+pyyaml>=6.0.1,<7.0.0
+typer>=0.9.0,<1.0.0
+rich>=13.6.0,<14.0.0
+structlog>=23.2.0,<24.0.0
+
+# Azure dependencies
+azure-identity>=1.15.0,<2.0.0
+azure-mgmt-resource>=23.0.1,<24.0.0
+azure-mgmt-compute>=30.3.0,<31.0.0
+azure-mgmt-network>=25.2.0,<26.0.0
+azure-mgmt-storage>=21.1.0,<22.0.0
+azure-mgmt-sql>=3.0.1,<4.0.0
+azure-storage-blob>=12.19.0,<13.0.0
+
+# Database
+sqlalchemy>=2.0.23,<3.0.0
+alembic>=1.13.0,<2.0.0
+
+# Caching
+redis>=5.0.1,<6.0.0
+hiredis>=2.2.3,<3.0.0
+
+# Image processing and diagram generation
+pillow>=10.1.0,<11.0.0
+cairosvg>=2.7.1,<3.0.0
+
+# Development and testing dependencies will be in dev.txt

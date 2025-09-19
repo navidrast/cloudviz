@@ -1,0 +1,80 @@
+# Pre-Production Environment Configuration
+api:
+  debug: false
+  host: "0.0.0.0"
+  port: 8000
+  reload: false
+  workers: 2
+  cors_origins: ["https://cloudviz-ppt.example.com"]
+  
+database:
+  url: "${DATABASE_URL}"
+  echo: false
+  pool_size: 10
+  pool_timeout: 30
+  
+logging:
+  level: "INFO"
+  format: "json"
+  file: "logs/cloudviz_ppt.log"
+  rotation: "100 MB"
+  retention: "30 days"
+
+cache:
+  enabled: true
+  backend: "redis"
+  url: "${REDIS_URL}"
+  ttl: 1800
+
+visualization:
+  cache_enabled: true
+  output_dir: "./output/ppt"
+  include_metadata: true
+  timestamp_files: true
+  max_diagram_size_mb: 100
+  cleanup_interval_hours: 6
+
+security:
+  jwt_secret_key: "${JWT_SECRET_KEY}"
+  jwt_expiry_hours: 8
+  rate_limit_enabled: true
+  rate_limit_requests: 100
+  rate_limit_window: 60
+  
+providers:
+  azure:
+    timeout: 600
+    retry_attempts: 5
+    cache_ttl: 1800
+    parallel_requests: 10
+    
+  aws:
+    timeout: 600
+    retry_attempts: 5
+    cache_ttl: 1800
+    parallel_requests: 10
+    
+  gcp:
+    timeout: 600
+    retry_attempts: 5
+    cache_ttl: 1800
+    parallel_requests: 10
+
+external_tools:
+  graphviz_path: "/usr/bin/dot"
+  mermaid_cli_path: "/usr/local/bin/mmdc"
+  check_dependencies: true
+
+monitoring:
+  enabled: true
+  metrics_endpoint: "/metrics"
+  health_endpoint: "/health"
+  
+storage:
+  cloud_export_enabled: true
+  default_provider: "azure"
+  
+notifications:
+  enabled: true
+  slack_webhook: "${SLACK_WEBHOOK_URL}"
+  email_enabled: false

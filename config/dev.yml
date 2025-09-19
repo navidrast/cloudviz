@@ -1,0 +1,60 @@
+# Development Environment Configuration
+api:
+  debug: true
+  host: "127.0.0.1"
+  port: 8000
+  reload: true
+  workers: 1
+  cors_origins: ["http://localhost:3000", "http://127.0.0.1:3000"]
+  
+database:
+  url: "sqlite:///./cloudviz_dev.db"
+  echo: true
+  
+logging:
+  level: "DEBUG"
+  format: "detailed"
+  file: "logs/cloudviz_dev.log"
+  rotation: "1 day"
+  retention: "7 days"
+
+cache:
+  enabled: false
+  backend: "memory"
+  ttl: 300
+
+visualization:
+  cache_enabled: false
+  output_dir: "./output/dev"
+  include_metadata: true
+  timestamp_files: true
+  max_diagram_size_mb: 50
+
+security:
+  jwt_secret_key: "dev-secret-key-change-in-production"
+  jwt_expiry_hours: 24
+  rate_limit_enabled: false
+  
+providers:
+  azure:
+    timeout: 300
+    retry_attempts: 3
+    cache_ttl: 600
+    regions: ["eastus", "westus2", "centralus"]
+    
+  aws:
+    timeout: 300
+    retry_attempts: 3
+    cache_ttl: 600
+    regions: ["us-east-1", "us-west-2", "eu-west-1"]
+    
+  gcp:
+    timeout: 300
+    retry_attempts: 3
+    cache_ttl: 600
+    regions: ["us-central1", "us-east1", "europe-west1"]
+
+external_tools:
+  graphviz_path: "dot"
+  mermaid_cli_path: "mmdc"
+  check_dependencies: false
