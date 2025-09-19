@@ -7,7 +7,7 @@ name = "cloudviz"
 version = "1.0.0"
 description = "Multi-cloud infrastructure visualization platform with REST API and Mermaid diagram generation"
 readme = "README.md"
-license = {file = "LICENSE"}
+license = {text = "MIT"}
 authors = [
     {name = "CloudViz Team", email = "team@cloudviz.com"},
 ]
@@ -15,10 +15,8 @@ classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Intended Audience :: System Administrators",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -30,7 +28,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 keywords = ["cloud", "visualization", "azure", "aws", "gcp", "infrastructure", "diagram", "mermaid", "api", "rest", "n8n", "automation"]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
     "fastapi>=0.104.0,<1.0.0",
     "uvicorn[standard]>=0.24.0,<1.0.0",
@@ -86,11 +84,11 @@ all = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/cloudviz"
-Documentation = "https://cloudviz.readthedocs.io"
-Repository = "https://github.com/yourusername/cloudviz.git"
-Issues = "https://github.com/yourusername/cloudviz/issues"
-Changelog = "https://github.com/yourusername/cloudviz/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/navidrast/cloudviz"
+Documentation = "https://github.com/navidrast/cloudviz#readme"
+Repository = "https://github.com/navidrast/cloudviz.git"
+Issues = "https://github.com/navidrast/cloudviz/issues"
+Changelog = "https://github.com/navidrast/cloudviz/blob/main/CHANGELOG.md"
 
 [project.scripts]
 cloudviz = "cloudviz.cli.main:app"
@@ -109,7 +107,7 @@ cloudviz = [
 
 [tool.black]
 line-length = 88
-target-version = ['py38']
+target-version = ['py39']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
@@ -135,7 +133,7 @@ ensure_newline_before_comments = true
 line_length = 88
 
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.9"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true

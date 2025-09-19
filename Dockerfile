@@ -1,5 +1,5 @@
 # CloudViz Docker Configuration
-FROM python:3.11-slim as base
+FROM python:3.12-slim AS base
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -14,10 +14,17 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Node.js for Mermaid CLI
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
-    && apt-get install -y nodejs \
-    && npm install -g @mermaid-js/mermaid-cli
+# Install Node.js for Mermaid CLI (alternative approach for environments with SSL issues)
+RUN apt-get update && apt-get install -y ca-certificates \
+    && apt-get install -y nodejs npm || ( \
+        echo "Installing Node.js via alternative method..." \
+        && apt-get install -y wget \
+        && wget -qO- https://deb.nodesource.com/setup_20.x | bash - \
+        && apt-get install -y nodejs \
+    ) \
+    && npm install -g @mermaid-js/mermaid-cli \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Create app user
 RUN groupadd -r cloudviz && useradd -r -g cloudviz cloudviz
@@ -53,7 +60,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 CMD ["python", "-m", "uvicorn", "cloudviz.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 # Development stage
-FROM base as development
+FROM base AS development
 
 USER root
 RUN pip install -r requirements/dev.txt
@@ -62,7 +69,7 @@ USER cloudviz
 CMD ["python", "-m", "uvicorn", "cloudviz.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
 # Production stage
-FROM base as production
+FROM base AS production
 
 # Copy production configuration
 COPY config/prod.yml /app/config/default.yml
