@@ -22,7 +22,9 @@ from cloudviz.api.routes import (
     extraction_router, 
     visualization_router,
     health_router,
-    admin_router
+    admin_router,
+    aws_router,
+    gcp_router
 )
 from cloudviz.api.middleware import (
     correlation_id_middleware,
@@ -104,6 +106,8 @@ def create_app(config: CloudVizConfig = None) -> FastAPI:
     app.include_router(extraction_router, prefix="/api/v1", tags=["Extraction"])
     app.include_router(visualization_router, prefix="/api/v1", tags=["Visualization"])
     app.include_router(admin_router, prefix="/api/v1/admin", tags=["Administration"])
+    app.include_router(aws_router, prefix="/api/v1", tags=["AWS"])
+    app.include_router(gcp_router, prefix="/api/v1", tags=["GCP"])
     
     return app
 

@@ -7,8 +7,50 @@ from abc import ABC, abstractmethod
 from typing import Dict, List, Optional, Any, Iterator, Union
 from cloudviz.core.models import (
     CloudResource, ResourceRelationship, ResourceInventory, 
-    ExtractionScope, CloudProvider, ExtractionJob
+    ExtractionScope, CloudProvider, ExtractionJob, BaseResource
 )
+
+
+class BaseResourceExtractor(ABC):
+    """
+    Base class for all resource extractors.
+    """
+    
+    def __init__(self):
+        self._authenticated = False
+        
+    @abstractmethod
+    async def authenticate(self) -> bool:
+        """Authenticate with the cloud provider."""
+        pass
+        
+    @abstractmethod
+    async def extract_resources_by_region(self, region: str, 
+                                        resource_types: Optional[List[str]] = None) -> List[BaseResource]:
+        """Extract resources from a specific region."""
+        pass
+        
+    @abstractmethod
+    async def extract_global_resources(self, 
+                                     resource_types: Optional[List[str]] = None) -> List[BaseResource]:
+        """Extract global resources."""
+        pass
+
+
+class BaseResourceFactory(ABC):
+    """
+    Base class for resource factories.
+    """
+    
+    @abstractmethod
+    def create_resource(self, resource_type: str, data: Dict[str, Any]) -> BaseResource:
+        """Create a resource instance from data."""
+        pass
+        
+    @abstractmethod
+    def get_supported_types(self) -> List[str]:
+        """Get supported resource types."""
+        pass
 
 
 class ResourceExtractor(ABC):

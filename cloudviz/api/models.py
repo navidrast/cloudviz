@@ -62,3 +62,28 @@ class RateLimitInfo(BaseModel):
     requests_remaining: int
     reset_time: datetime
     window_seconds: int
+
+
+class ExtractionRequest(BaseModel):
+    """Base extraction request model."""
+    regions: Optional[List[str]] = None
+    resource_types: Optional[List[str]] = None
+    filters: Optional[Dict[str, Any]] = None
+    webhook_url: Optional[str] = None
+
+
+class ExtractionResponse(BaseModel):
+    """Base extraction response model."""
+    job_id: str
+    status: JobStatus
+    message: str
+    estimated_completion: Optional[datetime] = None
+    resource_count: Optional[int] = None
+
+
+class ErrorResponse(BaseModel):
+    """Error response model."""
+    error: str
+    detail: str
+    status_code: int
+    timestamp: datetime

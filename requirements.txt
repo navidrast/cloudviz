@@ -31,11 +31,18 @@ azure-mgmt-storage>=21.1.0,<22.0.0
 azure-mgmt-sql>=3.0.1,<4.0.0
 azure-storage-blob>=12.19.0,<13.0.0
 
-# AWS cloud provider dependencies (future)
-# boto3>=1.34.0,<2.0.0
+# AWS cloud provider dependencies
+boto3>=1.34.0,<2.0.0
+botocore>=1.34.0,<2.0.0
 
-# GCP cloud provider dependencies (future)
-# google-cloud-storage>=2.10.0,<3.0.0
+# GCP cloud provider dependencies
+google-cloud-storage>=2.10.0,<3.0.0
+google-cloud-compute>=1.15.0,<2.0.0
+google-cloud-sql>=3.8.0,<4.0.0
+google-cloud-container>=2.17.0,<3.0.0
+google-cloud-functions>=1.16.0,<2.0.0
+google-cloud-pubsub>=2.18.0,<3.0.0
+google-auth>=2.23.0,<3.0.0
 
 # Database and caching
 sqlalchemy>=2.0.23,<3.0.0

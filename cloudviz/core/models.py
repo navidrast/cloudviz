@@ -53,6 +53,13 @@ class CloudProvider(Enum):
     GCP = "gcp"
 
 
+class ResourceProvider(Enum):
+    """Supported resource providers (alias for CloudProvider)."""
+    AZURE = "azure"
+    AWS = "aws"
+    GCP = "gcp"
+
+
 class RelationshipType(Enum):
     """Types of relationships between cloud resources."""
     CONTAINS = "contains"
@@ -74,6 +81,24 @@ class ExtractionScope(Enum):
     ORGANIZATION = "organization"
     PROJECT = "project"
     ACCOUNT = "account"
+
+
+@dataclass
+class BaseResource:
+    """
+    Base resource model for all cloud providers.
+    """
+    id: str
+    name: str
+    resource_type: str
+    provider: ResourceProvider
+    region: Optional[str] = None
+    tags: Dict[str, str] = field(default_factory=dict)
+    properties: Dict[str, Any] = field(default_factory=dict)
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    created_time: Optional[datetime] = None
+    last_modified: Optional[datetime] = None
+    status: Optional[str] = None
 
 
 @dataclass
