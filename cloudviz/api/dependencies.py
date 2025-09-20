@@ -3,8 +3,8 @@ API dependencies for CloudViz REST API.
 Provides common dependency injection functions.
 """
 
-from typing import Dict, Any, Optional
-from fastapi import Depends, HTTPException, Request, status
+from typing import Dict, Any
+from fastapi import HTTPException, Request, status
 
 from cloudviz.core.config import CloudVizConfig
 from cloudviz.core.utils import get_logger
