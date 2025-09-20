@@ -1,4 +1,6 @@
-# 🌩️ CloudViz - Multi-Cloud Infrastructure Visualization Platform
+import os
+
+readme_content = """# 🌩️ CloudViz - Multi-Cloud Infrastructure Visualization Platform
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
@@ -522,4 +524,9 @@ The hierarchical diagram approach provides:
 
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 [![GitHub Stars](https://img.shields.io/github/stars/navidrast/cloudviz?style=flat-square)](https://github.com/navidrast/cloudviz/stargazers)
-[![Enterprise Ready](https://img.shields.io/badge/Enterprise-Ready-gold?style=flat-square)](https://github.com/navidrast/cloudviz)
+[![Enterprise Ready](https://img.shields.io/badge/Enterprise-Ready-gold?style=flat-square)](https://github.com/navidrast/cloudviz)"""
+
+with open("README.md", "w", encoding="utf-8") as f:
+    f.write(readme_content)
+
+print("README.md created successfully with fixed Mermaid syntax!")
