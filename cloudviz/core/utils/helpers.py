@@ -10,7 +10,7 @@ import functools
 from typing import Any, Dict, List, Optional, Union, Callable
 from datetime import datetime, timedelta
 import hashlib
-import random
+import secrets  # Replace random with secrets for cryptographic security
 
 
 def generate_id() -> str:
@@ -140,7 +140,9 @@ def retry_with_backoff(
                     delay = min(base_delay * (exponential_base ** attempt), max_delay)
                     
                     if jitter:
-                        delay *= (0.5 + random.random() * 0.5)
+                        # Use secrets for cryptographically secure random generation
+                        jitter_factor = 0.5 + (secrets.randbelow(1000) / 2000.0)  # Range: 0.5 to 1.0
+                        delay *= jitter_factor
                     
                     await asyncio.sleep(delay)
             
@@ -163,7 +165,9 @@ def retry_with_backoff(
                     delay = min(base_delay * (exponential_base ** attempt), max_delay)
                     
                     if jitter:
-                        delay *= (0.5 + random.random() * 0.5)
+                        # Use secrets for cryptographically secure random generation
+                        jitter_factor = 0.5 + (secrets.randbelow(1000) / 2000.0)  # Range: 0.5 to 1.0
+                        delay *= jitter_factor
                     
                     import time
                     time.sleep(delay)
