@@ -14,10 +14,8 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Node.js for Mermaid CLI
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
-    && apt-get install -y nodejs \
-    && npm install -g @mermaid-js/mermaid-cli
+# Note: Mermaid CLI installation is optional for core functionality
+# If needed in production, install it separately or use external service
 
 # Create app user
 RUN groupadd -r cloudviz && useradd -r -g cloudviz cloudviz

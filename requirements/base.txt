@@ -3,6 +3,7 @@ fastapi>=0.104.0,<1.0.0
 uvicorn[standard]>=0.24.0,<1.0.0
 pydantic>=2.4.0,<3.0.0
 pydantic-settings>=2.0.0,<3.0.0
+email-validator>=2.1.0,<3.0.0
 httpx>=0.25.0,<1.0.0
 aiofiles>=23.2.0,<24.0.0
 python-multipart>=0.0.6,<1.0.0
@@ -21,6 +22,16 @@ azure-mgmt-network>=25.2.0,<26.0.0
 azure-mgmt-storage>=21.1.0,<22.0.0
 azure-mgmt-sql>=3.0.1,<4.0.0
 azure-storage-blob>=12.19.0,<13.0.0
+
+# AWS dependencies
+boto3>=1.34.0,<2.0.0
+botocore>=1.34.0,<2.0.0
+
+# Google Cloud dependencies
+google-cloud-compute>=1.15.0,<2.0.0
+google-cloud-storage>=2.10.0,<3.0.0
+google-cloud-resource-manager>=1.10.0,<2.0.0
+google-auth>=2.22.0,<3.0.0
 
 # Database
 sqlalchemy>=2.0.23,<3.0.0

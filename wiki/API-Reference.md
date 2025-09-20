@@ -1,25 +1,51 @@
-# 🔌 API Reference
+# CloudViz API Reference
 
-Complete documentation for CloudViz REST API endpoints. All endpoints return JSON responses and support standard HTTP status codes.
+Complete API documentation for the CloudViz multi-cloud infrastructure visualization platform.
 
-## 🔐 **Authentication**
+## Table of Contents
 
-CloudViz uses JWT (JSON Web Token) authentication. Include the token in the `Authorization` header:
+1. [Overview](#overview)
+2. [Authentication](#authentication)
+3. [Base URLs and Versioning](#base-urls-and-versioning)
+4. [Common Patterns](#common-patterns)
+5. [Health and Status Endpoints](#health-and-status-endpoints)
+6. [Authentication Endpoints](#authentication-endpoints)
+7. [Resource Extraction Endpoints](#resource-extraction-endpoints)
+8. [Visualization Endpoints](#visualization-endpoints)
+9. [Job Management Endpoints](#job-management-endpoints)
+10. [Provider-Specific Endpoints](#provider-specific-endpoints)
+11. [Admin Endpoints](#admin-endpoints)
+12. [Error Handling](#error-handling)
+13. [Rate Limiting](#rate-limiting)
+14. [Webhooks](#webhooks)
+15. [SDK Examples](#sdk-examples)
 
-```bash
-Authorization: Bearer <your-jwt-token>
-```
+## Overview
 
-### **Authentication Endpoints**
+The CloudViz API is a RESTful API built with FastAPI that provides programmatic access to cloud infrastructure discovery, visualization, and management capabilities. The API supports JSON request/response format and follows standard HTTP conventions.
 
-#### **POST /auth/login**
-Authenticate user and receive JWT token.
+### Key Features
+- **Multi-cloud support**: AWS, Azure, and Google Cloud Platform
+- **Asynchronous operations**: Background job processing for long-running tasks
+- **Multiple output formats**: Mermaid, Graphviz, PNG, SVG, PDF
+- **Real-time status updates**: WebSocket support for job progress
+- **Comprehensive filtering**: Resource type, tag, region, and scope-based filtering
+- **Relationship mapping**: Automatic discovery of resource dependencies
+- **Caching**: Intelligent caching for improved performance
 
-**Request:**
-```json
+## Authentication
+
+CloudViz API uses JWT (JSON Web Tokens) for authentication. All API requests (except health check and authentication endpoints) require a valid JWT token in the Authorization header.
+
+### Obtaining a Token
+
+```http
+POST /auth/login
+Content-Type: application/json
+
 {
-  "username": "admin",
-  "password": "secure_password"
+  "username": "your-username",
+  "password": "your-password"
 }
 ```
 
@@ -28,539 +54,552 @@ Authenticate user and receive JWT token.
 {
   "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
   "token_type": "bearer",
-  "expires_in": 1800
-}
-```
-
-#### **POST /auth/logout**
-Invalidate current JWT token.
-
-#### **GET /auth/me**
-Get current user information.
-
-**Response:**
-```json
-{
-  "id": 1,
-  "username": "admin",
-  "email": "admin@company.com",
-  "roles": ["admin"],
-  "last_login": "2025-09-20T10:00:00Z"
-}
-```
-
----
-
-## ☁️ **Cloud Provider Discovery**
-
-### **Azure Endpoints**
-
-#### **POST /azure/discover**
-Discover Azure resources in subscription.
-
-**Request:**
-```json
-{
-  "subscription_id": "12345678-1234-1234-1234-123456789012",
-  "resource_groups": ["production", "staging"],
-  "regions": ["eastus", "westus2"],
-  "resource_types": ["Microsoft.Compute/virtualMachines", "Microsoft.Storage/storageAccounts"]
-}
-```
-
-**Response:**
-```json
-{
-  "discovery_id": "disc_azure_001",
-  "status": "completed",
-  "resources_found": 156,
-  "regions": ["East US", "West US 2"],
-  "cost_estimate": "$12,450/month",
-  "resources": [
-    {
-      "id": "/subscriptions/.../resourceGroups/prod/providers/Microsoft.Compute/virtualMachines/web-vm-01",
-      "name": "web-vm-01",
-      "type": "Microsoft.Compute/virtualMachines",
-      "location": "eastus",
-      "properties": {
-        "size": "Standard_D4s_v3",
-        "status": "Running"
-      }
-    }
-  ]
-}
-```
-
-#### **GET /azure/resources**
-List discovered Azure resources.
-
-#### **GET /azure/cost-analysis**
-Get Azure cost breakdown by resource group.
-
-#### **POST /azure/vm-scale-sets/discover**
-Specific discovery for VM Scale Sets.
-
-#### **GET /azure/sql-databases**
-List Azure SQL databases.
-
-### **AWS Endpoints**
-
-#### **POST /aws/discover**
-Discover AWS resources in account.
-
-**Request:**
-```json
-{
-  "regions": ["us-west-2", "us-east-1"],
-  "services": ["ec2", "rds", "lambda", "ecs"],
-  "include_stopped": false
-}
-```
-
-**Response:**
-```json
-{
-  "discovery_id": "disc_aws_001",
-  "status": "completed",
-  "resources_found": 89,
-  "regions": ["us-west-2", "us-east-1"],
-  "cost_estimate": "$18,234/month",
-  "resources": [
-    {
-      "id": "i-0123456789abcdef0",
-      "name": "web-server-01",
-      "type": "EC2Instance",
-      "region": "us-west-2",
-      "properties": {
-        "instance_type": "t3.large",
-        "state": "running"
-      }
-    }
-  ]
-}
-```
-
-#### **GET /aws/ec2/instances**
-List EC2 instances.
-
-#### **GET /aws/rds/clusters**
-List RDS Aurora clusters.
-
-#### **GET /aws/lambda/functions**
-List Lambda functions.
-
-#### **POST /aws/cloudformation/discover**
-Discover CloudFormation stacks.
-
-### **GCP Endpoints**
-
-#### **POST /gcp/discover**
-Discover Google Cloud Platform resources.
-
-**Request:**
-```json
-{
-  "project_id": "my-project-12345",
-  "regions": ["us-central1", "us-west1"],
-  "services": ["compute", "gke", "bigquery"]
-}
-```
-
-**Response:**
-```json
-{
-  "discovery_id": "disc_gcp_001",
-  "status": "completed",
-  "resources_found": 67,
-  "regions": ["us-central1", "us-west1"],
-  "cost_estimate": "$16,225/month",
-  "resources": [
-    {
-      "id": "projects/my-project/zones/us-central1-a/instances/web-vm-1",
-      "name": "web-vm-1",
-      "type": "ComputeInstance",
-      "zone": "us-central1-a",
-      "properties": {
-        "machine_type": "n1-standard-4",
-        "status": "RUNNING"
-      }
-    }
-  ]
-}
-```
-
-#### **GET /gcp/gke/clusters**
-List GKE clusters.
-
-#### **GET /gcp/bigquery/datasets**
-List BigQuery datasets.
-
-#### **GET /gcp/vertex-ai/models**
-List Vertex AI models.
-
----
-
-## 🎨 **Visualization Endpoints**
-
-### **Diagram Generation**
-
-#### **POST /visualization/generate**
-Generate Mermaid diagram from discovered resources.
-
-**Request:**
-```json
-{
-  "discovery_ids": ["disc_azure_001", "disc_aws_001"],
-  "layout": "hierarchical",
-  "theme": "enterprise",
-  "include_costs": true,
-  "include_dependencies": true,
-  "max_nodes": 100
-}
-```
-
-**Response:**
-```json
-{
-  "diagram_id": "diag_001",
-  "mermaid_code": "flowchart TD\n  subgraph Production\n    VM1[Web Server]\n    DB1[(Database)]\n  end",
-  "metadata": {
-    "nodes": 45,
-    "connections": 67,
-    "cost_total": "$46,909/month"
+  "expires_in": 3600,
+  "user": {
+    "id": "user-id",
+    "username": "your-username",
+    "email": "user@example.com",
+    "roles": ["user"],
+    "permissions": ["extract", "visualize", "view"]
   }
 }
 ```
 
-#### **GET /visualization/diagrams/{diagram_id}**
-Retrieve generated diagram.
+### Using the Token
 
-#### **POST /visualization/export**
-Export diagram to various formats.
+Include the token in the Authorization header:
 
-**Request:**
+```http
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+```
+
+### Token Refresh
+
+```http
+POST /auth/refresh
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+```
+
+## Base URLs and Versioning
+
+### Base URL
+- **Production**: `https://api.cloudviz.com`
+- **Development**: `http://localhost:8000`
+
+### API Versioning
+- **Current Version**: `v1`
+- **Base Path**: `/api/v1`
+- **Full URL**: `https://api.cloudviz.com/api/v1`
+
+### Content Types
+- **Request**: `application/json`
+- **Response**: `application/json`, `image/png`, `image/svg+xml`, `text/plain`
+
+## Common Patterns
+
+### Standard Response Format
+
 ```json
 {
-  "diagram_id": "diag_001",
-  "format": "png",
-  "width": 1920,
-  "height": 1080,
-  "quality": "high"
+  "data": {...},
+  "metadata": {
+    "timestamp": "2023-12-01T10:00:00Z",
+    "correlation_id": "req-123456",
+    "version": "1.0.0"
+  },
+  "links": {
+    "self": "/api/v1/resource",
+    "related": "/api/v1/related-resource"
+  }
 }
 ```
 
-### **Themes & Layouts**
+### Error Response Format
 
-#### **GET /visualization/themes**
-List available themes.
+```json
+{
+  "error": {
+    "code": "INVALID_REQUEST",
+    "message": "The request is invalid",
+    "details": "Validation error on field 'provider'",
+    "correlation_id": "req-123456",
+    "timestamp": "2023-12-01T10:00:00Z"
+  }
+}
+```
+
+### Pagination
+
+```json
+{
+  "data": [...],
+  "pagination": {
+    "page": 1,
+    "per_page": 50,
+    "total": 150,
+    "pages": 3,
+    "has_next": true,
+    "has_prev": false
+  },
+  "links": {
+    "next": "/api/v1/resource?page=2",
+    "prev": null,
+    "first": "/api/v1/resource?page=1",
+    "last": "/api/v1/resource?page=3"
+  }
+}
+```
+
+## Health and Status Endpoints
+
+### Health Check
+
+Get system health status.
+
+```http
+GET /health
+```
+
+**Response:**
+```json
+{
+  "status": "healthy",
+  "version": "1.0.0",
+  "timestamp": "2023-12-01T10:00:00Z",
+  "services": {
+    "database": {
+      "status": "healthy",
+      "response_time_ms": 5,
+      "connections": {
+        "active": 2,
+        "max": 20
+      }
+    },
+    "cache": {
+      "status": "healthy",
+      "response_time_ms": 1,
+      "memory_usage": "45%"
+    },
+    "providers": {
+      "azure": "configured",
+      "aws": "not_configured",
+      "gcp": "configured"
+    }
+  },
+  "performance": {
+    "uptime_seconds": 86400,
+    "requests_total": 1500,
+    "active_jobs": 3
+  }
+}
+```
+
+### System Metrics
+
+Get detailed system metrics.
+
+```http
+GET /health/metrics
+Authorization: Bearer <token>
+```
+
+**Response:**
+```json
+{
+  "system": {
+    "cpu_usage": 25.5,
+    "memory_usage": 65.2,
+    "disk_usage": 40.1
+  },
+  "application": {
+    "active_connections": 15,
+    "cache_hit_rate": 94.5,
+    "avg_response_time_ms": 120
+  },
+  "providers": {
+    "azure": {
+      "last_check": "2023-12-01T10:00:00Z",
+      "status": "healthy",
+      "rate_limit_remaining": 95
+    }
+  }
+}
+```
+
+## Authentication Endpoints
+
+### User Login
+
+Authenticate user and receive JWT token.
+
+```http
+POST /auth/login
+Content-Type: application/json
+
+{
+  "username": "user@example.com",
+  "password": "secure-password"
+}
+```
+
+**Response:**
+```json
+{
+  "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+  "token_type": "bearer",
+  "expires_in": 3600,
+  "refresh_token": "refresh-token-here",
+  "user": {
+    "id": "user-123",
+    "username": "user@example.com",
+    "email": "user@example.com",
+    "roles": ["user", "admin"],
+    "permissions": ["extract", "visualize", "view", "admin"],
+    "last_login": "2023-12-01T10:00:00Z"
+  }
+}
+```
+
+### Token Refresh
+
+Refresh an existing JWT token.
+
+```http
+POST /auth/refresh
+Content-Type: application/json
+Authorization: Bearer <refresh-token>
+
+{
+  "refresh_token": "refresh-token-here"
+}
+```
+
+### User Logout
+
+Invalidate current token.
+
+```http
+POST /auth/logout
+Authorization: Bearer <token>
+```
+
+### User Profile
+
+Get current user profile information.
+
+```http
+GET /auth/profile
+Authorization: Bearer <token>
+```
+
+**Response:**
+```json
+{
+  "id": "user-123",
+  "username": "user@example.com",
+  "email": "user@example.com",
+  "roles": ["user"],
+  "permissions": ["extract", "visualize", "view"],
+  "created_at": "2023-01-01T00:00:00Z",
+  "last_login": "2023-12-01T10:00:00Z",
+  "preferences": {
+    "default_theme": "professional",
+    "default_format": "mermaid",
+    "timezone": "UTC"
+  }
+}
+```
+
+## Resource Extraction Endpoints
+
+### Start Resource Extraction
+
+Initiate cloud resource discovery and extraction.
+
+```http
+POST /api/v1/extract
+Content-Type: application/json
+Authorization: Bearer <token>
+
+{
+  "provider": "azure",
+  "scope": "subscription",
+  "scope_identifier": "subscription-id-here",
+  "filters": {
+    "resource_types": ["virtual_machine", "storage_account", "sql_database"],
+    "regions": ["eastus", "westus2"],
+    "tags": {
+      "Environment": "production",
+      "Owner": "team-alpha"
+    }
+  },
+  "include_relationships": true,
+  "options": {
+    "include_properties": true,
+    "include_tags": true,
+    "max_resources": 1000
+  }
+}
+```
+
+**Request Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `provider` | string | Yes | Cloud provider: `azure`, `aws`, `gcp` |
+| `scope` | string | Yes | Extraction scope: `subscription`, `resource_group`, `region` |
+| `scope_identifier` | string | Yes | Subscription ID, Resource Group name, or Region name |
+| `filters` | object | No | Resource filtering options |
+| `include_relationships` | boolean | No | Include resource relationships (default: true) |
+| `options` | object | No | Additional extraction options |
+
+**Response:**
+```json
+{
+  "job_id": "job-12345678-1234-1234-1234-123456789abc",
+  "status": "pending",
+  "message": "Extraction job started successfully",
+  "estimated_duration_seconds": 120,
+  "created_at": "2023-12-01T10:00:00Z",
+  "links": {
+    "status": "/api/v1/jobs/job-12345678-1234-1234-1234-123456789abc",
+    "cancel": "/api/v1/jobs/job-12345678-1234-1234-1234-123456789abc/cancel"
+  }
+}
+```
+
+### List Available Providers
+
+Get supported cloud providers and their configuration status.
+
+```http
+GET /api/v1/providers
+Authorization: Bearer <token>
+```
+
+**Response:**
+```json
+{
+  "providers": [
+    {
+      "name": "azure",
+      "display_name": "Microsoft Azure",
+      "supported": true,
+      "configured": true,
+      "features": ["extraction", "visualization", "relationships"],
+      "supported_scopes": ["subscription", "resource_group"],
+      "supported_resource_types": [
+        "virtual_machine",
+        "storage_account",
+        "sql_database",
+        "virtual_network",
+        "load_balancer"
+      ],
+      "authentication_methods": ["service_principal", "managed_identity", "interactive"],
+      "regions": ["eastus", "westus2", "northeurope", "westeurope"]
+    },
+    {
+      "name": "aws",
+      "display_name": "Amazon Web Services",
+      "supported": true,
+      "configured": false,
+      "features": ["extraction", "visualization"],
+      "supported_scopes": ["account", "region"],
+      "supported_resource_types": [
+        "ec2_instance",
+        "s3_bucket",
+        "rds_instance",
+        "vpc",
+        "load_balancer"
+      ],
+      "authentication_methods": ["access_key", "iam_role", "sso"],
+      "regions": ["us-east-1", "us-west-2", "eu-west-1", "ap-southeast-1"]
+    },
+    {
+      "name": "gcp",
+      "display_name": "Google Cloud Platform",
+      "supported": true,
+      "configured": true,
+      "features": ["extraction", "visualization"],
+      "supported_scopes": ["project"],
+      "supported_resource_types": [
+        "compute_instance",
+        "cloud_storage",
+        "cloud_sql",
+        "vpc_network",
+        "load_balancer"
+      ],
+      "authentication_methods": ["service_account", "oauth", "adc"],
+      "regions": ["us-central1", "us-west1", "europe-west1", "asia-east1"]
+    }
+  ]
+}
+```
+
+### Test Provider Authentication
+
+Test authentication with a specific cloud provider.
+
+```http
+POST /api/v1/providers/{provider}/test-auth
+Authorization: Bearer <token>
+
+{
+  "credentials": {
+    "tenant_id": "tenant-id",
+    "client_id": "client-id",
+    "client_secret": "client-secret"
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "status": "success",
+  "message": "Authentication successful",
+  "provider": "azure",
+  "account_info": {
+    "tenant_id": "tenant-id",
+    "subscription_id": "subscription-id",
+    "subscription_name": "Production Subscription",
+    "available_regions": ["eastus", "westus2"]
+  },
+  "permissions": {
+    "read": true,
+    "list": true,
+    "describe": true
+  }
+}
+```
+
+## Visualization Endpoints
+
+### Render Infrastructure Diagram
+
+Generate visualization diagrams from resource inventory.
+
+```http
+POST /api/v1/render
+Content-Type: application/json
+Authorization: Bearer <token>
+
+{
+  "inventory": {
+    "resources": [...],
+    "relationships": [...],
+    "metadata": {...}
+  },
+  "format": "mermaid",
+  "theme": "professional",
+  "layout": "hierarchical",
+  "options": {
+    "width": 1920,
+    "height": 1080,
+    "dpi": 300,
+    "background_color": "white",
+    "include_legend": true,
+    "group_by": "resource_type"
+  }
+}
+```
+
+**Request Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `inventory` | object | Yes | Resource inventory data from extraction |
+| `format` | string | No | Output format: `mermaid`, `graphviz`, `png`, `svg`, `pdf` |
+| `theme` | string | No | Visual theme: `professional`, `dark`, `light`, `minimal`, `colorful` |
+| `layout` | string | No | Layout algorithm: `hierarchical`, `force`, `circular`, `grid`, `mindmap` |
+| `options` | object | No | Format-specific rendering options |
+
+**Response:**
+```json
+{
+  "job_id": "render-12345678-1234-1234-1234-123456789abc",
+  "status": "pending",
+  "message": "Rendering job started",
+  "format": "mermaid",
+  "estimated_duration_seconds": 30,
+  "created_at": "2023-12-01T10:00:00Z",
+  "links": {
+    "status": "/api/v1/jobs/render-12345678-1234-1234-1234-123456789abc",
+    "result": "/api/v1/render/render-12345678-1234-1234-1234-123456789abc/result"
+  }
+}
+```
+
+### Get Available Themes
+
+List available visualization themes.
+
+```http
+GET /api/v1/render/themes
+Authorization: Bearer <token>
+```
 
 **Response:**
 ```json
 {
   "themes": [
     {
-      "name": "enterprise",
-      "description": "Professional enterprise theme",
-      "colors": {
-        "primary": "#2E86AB",
-        "secondary": "#A23B72",
-        "success": "#F18F01",
-        "warning": "#C73E1D"
-      }
+      "name": "professional",
+      "display_name": "Professional",
+      "description": "Corporate-ready styling with neutral colors",
+      "preview_url": "/api/v1/render/themes/professional/preview"
+    },
+    {
+      "name": "dark",
+      "display_name": "Dark Mode",
+      "description": "Dark theme optimized for development environments",
+      "preview_url": "/api/v1/render/themes/dark/preview"
+    },
+    {
+      "name": "colorful",
+      "display_name": "Colorful",
+      "description": "Provider-specific color coding and rich styling",
+      "preview_url": "/api/v1/render/themes/colorful/preview"
     }
   ]
 }
 ```
 
-#### **GET /visualization/layouts**
-List available diagram layouts.
+### Compare Infrastructure States
 
----
+Generate comparison diagrams between two infrastructure states.
 
-## 🔍 **Resource Management**
+```http
+POST /api/v1/render/compare
+Content-Type: application/json
+Authorization: Bearer <token>
 
-### **Resource Operations**
+{
+  "before_inventory": {...},
+  "after_inventory": {...},
+  "format": "mermaid",
+  "theme": "professional",
+  "highlight_changes": true,
+  "change_types": ["added", "removed", "modified"],
+  "options": {
+    "show_unchanged": false,
+    "group_changes": true
+  }
+}
+```
 
-#### **GET /resources**
-List all discovered resources across providers.
-
-**Query Parameters:**
-- `provider`: azure, aws, gcp
-- `type`: resource type filter
-- `region`: region filter
-- `status`: running, stopped, etc.
-- `page`: pagination
-- `limit`: results per page
-
-#### **GET /resources/{resource_id}**
-Get detailed resource information.
-
-#### **POST /resources/search**
-Advanced resource search.
-
-**Request:**
+**Response:**
 ```json
 {
-  "query": "web server",
-  "filters": {
-    "provider": "azure",
-    "type": "VirtualMachine",
-    "status": "running"
+  "job_id": "compare-12345678-1234-1234-1234-123456789abc",
+  "status": "pending",
+  "changes_detected": {
+    "added": 5,
+    "removed": 2,
+    "modified": 8
   },
-  "sort": "cost_desc"
+  "estimated_duration_seconds": 45
 }
 ```
 
-### **Cost Analysis**
-
-#### **GET /costs/summary**
-Get cost summary across all providers.
-
-**Response:**
-```json
-{
-  "total_monthly": "$46,909",
-  "by_provider": {
-    "azure": "$19,234",
-    "aws": "$18,675",
-    "gcp": "$9,000"
-  },
-  "by_region": {
-    "East US": "$15,234",
-    "West US 2": "$12,675"
-  }
-}
-```
-
-#### **POST /costs/forecast**
-Generate cost forecasting.
-
----
-
-## 🤖 **Automation & Integration**
-
-### **Webhook Endpoints**
-
-#### **POST /webhooks/register**
-Register webhook for events.
-
-**Request:**
-```json
-{
-  "url": "https://your-app.com/cloudviz-webhook",
-  "events": ["discovery.completed", "cost.threshold"],
-  "secret": "webhook_secret_key"
-}
-```
-
-#### **GET /webhooks**
-List registered webhooks.
-
-### **Background Jobs**
-
-#### **POST /jobs/schedule**
-Schedule background discovery job.
-
-**Request:**
-```json
-{
-  "job_type": "discovery",
-  "provider": "azure",
-  "schedule": "0 6 * * *",
-  "parameters": {
-    "subscription_id": "12345",
-    "regions": ["eastus"]
-  }
-}
-```
-
-#### **GET /jobs/{job_id}**
-Get job status and results.
-
----
-
-## 👥 **User Management**
-
-### **User Operations**
-
-#### **GET /users**
-List users (admin only).
-
-#### **POST /users**
-Create new user (admin only).
-
-**Request:**
-```json
-{
-  "username": "newuser",
-  "email": "user@company.com",
-  "password": "secure_password",
-  "roles": ["viewer"]
-}
-```
-
-#### **PUT /users/{user_id}**
-Update user (admin only).
-
-#### **DELETE /users/{user_id}**
-Delete user (admin only).
-
-### **Role Management**
-
-#### **GET /roles**
-List available roles.
-
-**Response:**
-```json
-{
-  "roles": [
-    {
-      "name": "admin",
-      "permissions": ["read", "write", "delete", "manage_users"]
-    },
-    {
-      "name": "operator",
-      "permissions": ["read", "write"]
-    },
-    {
-      "name": "viewer",
-      "permissions": ["read"]
-    }
-  ]
-}
-```
-
----
-
-## 🔧 **System Management**
-
-### **Health & Status**
-
-#### **GET /health**
-System health check.
-
-**Response:**
-```json
-{
-  "status": "healthy",
-  "version": "1.1.0",
-  "timestamp": "2025-09-20T10:00:00Z",
-  "components": {
-    "database": "healthy",
-    "redis": "healthy",
-    "azure_api": "healthy",
-    "aws_api": "healthy",
-    "gcp_api": "healthy"
-  }
-}
-```
-
-#### **GET /metrics**
-System metrics (Prometheus format).
-
-### **Configuration**
-
-#### **GET /config**
-Get current configuration.
-
-#### **PUT /config**
-Update configuration (admin only).
-
----
-
-## 📊 **Response Codes**
-
-| Code | Description |
-|------|-------------|
-| `200` | Success |
-| `201` | Created successfully |
-| `400` | Bad request - invalid parameters |
-| `401` | Unauthorized - invalid or missing token |
-| `403` | Forbidden - insufficient permissions |
-| `404` | Resource not found |
-| `429` | Too many requests - rate limited |
-| `500` | Internal server error |
-| `503` | Service unavailable |
-
-## 🔒 **Rate Limits**
-
-| Endpoint Type | Limit | Window |
-|---------------|-------|--------|
-| Authentication | 10 requests | 1 minute |
-| Discovery | 100 requests | 1 hour |
-| Visualization | 200 requests | 1 hour |
-| General API | 1000 requests | 1 hour |
-
-## 📚 **SDKs & Examples**
-
-### **Python SDK**
-```python
-from cloudviz_sdk import CloudVizClient
-
-client = CloudVizClient(
-    base_url="https://your-cloudviz.com",
-    token="your-jwt-token"
-)
-
-# Discover Azure resources
-discovery = client.azure.discover(
-    subscription_id="12345",
-    regions=["eastus"]
-)
-
-# Generate diagram
-diagram = client.visualization.generate(
-    discovery_ids=[discovery.id],
-    layout="hierarchical"
-)
-```
-
-### **cURL Examples**
-```bash
-# Authenticate
-TOKEN=$(curl -X POST http://localhost:8000/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"admin"}' | \
-  jq -r '.access_token')
-
-# Discover resources
-curl -X POST http://localhost:8000/azure/discover \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"subscription_id":"12345","regions":["eastus"]}'
-
-# Generate diagram
-curl -X POST http://localhost:8000/visualization/generate \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"discovery_ids":["disc_001"],"layout":"hierarchical"}'
-```
-
-### **JavaScript/Node.js**
-```javascript
-const axios = require('axios');
-
-const client = axios.create({
-  baseURL: 'http://localhost:8000',
-  headers: {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json'
-  }
-});
-
-// Discover AWS resources
-const discovery = await client.post('/aws/discover', {
-  regions: ['us-west-2'],
-  services: ['ec2', 'rds']
-});
-
-// Generate visualization
-const diagram = await client.post('/visualization/generate', {
-  discovery_ids: [discovery.data.discovery_id],
-  theme: 'enterprise'
-});
-```
-
----
-
-**Need more details?** Check out our [Integration Examples](Integration-Examples) or explore the interactive API documentation at `/docs` when CloudViz is running! 🚀
+For complete API documentation with interactive examples, visit the [Swagger UI](http://localhost:8000/docs) when running CloudViz locally.

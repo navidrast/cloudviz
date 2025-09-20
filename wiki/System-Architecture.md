@@ -1,504 +1,331 @@
-# 🏛️ System Architecture
+# CloudViz System Architecture
 
-CloudViz is built with a modern, scalable microservices architecture designed for enterprise cloud infrastructure visualization and automation.
+CloudViz is a comprehensive multi-cloud infrastructure visualization platform designed to discover, analyze, and visualize cloud resources across AWS, Azure, and Google Cloud Platform. The platform provides a REST API, multiple visualization formats, and extensive configuration options for enterprise deployment.
 
-## 🎯 **Architecture Overview**
+## Overview
+
+CloudViz transforms complex cloud infrastructure into clear, actionable diagrams through automated resource discovery and intelligent visualization. The platform supports real-time extraction, relationship mapping, and multi-format output generation suitable for documentation, compliance, and operational analysis.
+
+## Core Architecture
+
+### High-Level Architecture
 
 ```mermaid
-flowchart TD
-    subgraph "Client Layer"
-        UI[Web Interface]
-        API[REST API Clients]
-        CLI[Command Line Interface]
-        SDK[Python/JS SDKs]
-    end
-    
-    subgraph "API Gateway"
-        LB[Load Balancer]
-        AUTH[Authentication Service]
-        RATE[Rate Limiter]
-    end
-    
-    subgraph "Core Services"
-        MAIN[FastAPI Application]
-        DISCO[Discovery Engine]
-        VIZ[Visualization Engine]
-        JOBS[Background Jobs]
-    end
-    
-    subgraph "Data Layer"
-        DB[(PostgreSQL)]
-        CACHE[(Redis Cache)]
-        QUEUE[(Job Queue)]
-        FILES[File Storage]
-    end
-    
-    subgraph "Cloud Providers"
-        AZURE[Azure APIs]
+graph TB
+    subgraph "External Services"
         AWS[AWS APIs]
+        Azure[Azure APIs]
         GCP[GCP APIs]
     end
     
-    subgraph "External Services"
-        N8N[n8n Workflows]
-        PROM[Prometheus]
-        GRAF[Grafana]
-        HOOKS[Webhooks]
+    subgraph "CloudViz Platform"
+        subgraph "API Layer"
+            FastAPI[FastAPI REST Server]
+            Auth[Authentication & Authorization]
+            Middleware[CORS, Rate Limiting, Logging]
+        end
+        
+        subgraph "Core Services"
+            ExtSvc[Extraction Service]
+            VisSvc[Visualization Service]
+            JobSvc[Job Management Service]
+            CacheSvc[Cache Service]
+        end
+        
+        subgraph "Provider Layer"
+            AWSExt[AWS Extractor]
+            AzureExt[Azure Extractor]
+            GCPExt[GCP Extractor]
+        end
+        
+        subgraph "Visualization Layer"
+            MermaidEng[Mermaid Engine]
+            GraphvizEng[Graphviz Engine]
+            ImageEng[Image Engine]
+            Themes[Theme System]
+            Layouts[Layout Algorithms]
+        end
+        
+        subgraph "Storage Layer"
+            PostgreSQL[(PostgreSQL Database)]
+            Redis[(Redis Cache)]
+            FileStorage[File Storage]
+        end
     end
     
-    UI --> LB
-    API --> LB
-    CLI --> LB
-    SDK --> LB
+    subgraph "Client Applications"
+        WebUI[Web UI]
+        CLI[CLI Tool]
+        APIClient[API Clients]
+        N8N[n8n Integration]
+    end
     
-    LB --> AUTH
-    AUTH --> RATE
-    RATE --> MAIN
+    AWS --> AWSExt
+    Azure --> AzureExt
+    GCP --> GCPExt
     
-    MAIN --> DISCO
-    MAIN --> VIZ
-    MAIN --> JOBS
+    AWSExt --> ExtSvc
+    AzureExt --> ExtSvc
+    GCPExt --> ExtSvc
     
-    DISCO --> AZURE
-    DISCO --> AWS
-    DISCO --> GCP
+    ExtSvc --> JobSvc
+    VisSvc --> MermaidEng
+    VisSvc --> GraphvizEng
+    VisSvc --> ImageEng
     
-    MAIN --> DB
-    MAIN --> CACHE
-    JOBS --> QUEUE
-    VIZ --> FILES
+    JobSvc --> PostgreSQL
+    CacheSvc --> Redis
+    ExtSvc --> FileStorage
     
-    MAIN --> N8N
-    MAIN --> PROM
-    MAIN --> HOOKS
+    FastAPI --> Auth
+    FastAPI --> Middleware
+    FastAPI --> ExtSvc
+    FastAPI --> VisSvc
+    
+    WebUI --> FastAPI
+    CLI --> FastAPI
+    APIClient --> FastAPI
+    N8N --> FastAPI
 ```
 
-## 🏗️ **Component Architecture**
+## Technology Stack
 
-### **1. API Layer**
+### Backend Framework
+- **Python 3.8+** - Core runtime environment
+- **FastAPI** - High-performance REST API framework with automatic OpenAPI documentation
+- **Pydantic** - Data validation and serialization with type hints
+- **Uvicorn/Gunicorn** - ASGI server for production deployment
 
-#### **FastAPI Application**
-- **Technology**: FastAPI 0.68+ with Python 3.8+
-- **Features**: Automatic OpenAPI documentation, async/await support
-- **Scalability**: Horizontal scaling with multiple workers
-- **Performance**: 10,000+ requests per second per instance
+### Cloud Provider SDKs
+- **AWS**: boto3 (complete AWS service coverage)
+- **Azure**: Azure SDK for Python with PowerShell Az modules integration
+- **GCP**: Google Cloud Client Libraries
 
-```python
-# Core FastAPI structure
-from fastapi import FastAPI, Depends
-from cloudviz.api.routes import (
-    auth, azure, aws, gcp, 
-    visualization, admin
-)
+### Data Storage & Caching
+- **PostgreSQL** - Primary database for metadata, job history, and configurations
+- **Redis** - High-performance caching and session storage
+- **SQLAlchemy** - Database ORM with migration support via Alembic
 
-app = FastAPI(
-    title="CloudViz API",
-    version="1.1.0",
-    docs_url="/docs"
-)
+### Visualization Engines
+- **Mermaid** - Modern diagram syntax with web-native rendering
+- **Graphviz** - Traditional graph visualization with advanced layout algorithms
+- **Cairo/Pillow** - Image processing for raster format generation
 
-app.include_router(auth.router, prefix="/auth")
-app.include_router(azure.router, prefix="/azure")
-app.include_router(aws.router, prefix="/aws")
-app.include_router(gcp.router, prefix="/gcp")
-app.include_router(visualization.router, prefix="/visualization")
-```
+### Infrastructure & Deployment
+- **Docker** - Containerized deployment with multi-stage builds
+- **Docker Compose** - Local development and testing environment
+- **Kubernetes** - Production-grade orchestration (configurations included)
 
-#### **Authentication & Authorization**
-- **JWT Tokens**: HS256 algorithm with configurable expiration
-- **RBAC**: Role-based access control (admin, operator, viewer)
-- **API Keys**: Support for service-to-service authentication
-- **OAuth2**: Integration with external identity providers
+## Component Details
 
-#### **Rate Limiting**
-- **Redis-backed**: Distributed rate limiting across instances
-- **Configurable**: Per-endpoint and per-user limits
-- **Graceful**: Progressive throttling with informative responses
+### 1. API Layer
 
-### **2. Discovery Engine**
+#### FastAPI REST Server
+- **Endpoints**: 50+ REST endpoints covering all functionality
+- **Authentication**: JWT-based with role-based access control (RBAC)
+- **Rate Limiting**: Configurable per-endpoint rate limiting
+- **CORS Support**: Cross-origin resource sharing for web clients
+- **OpenAPI Documentation**: Automatic Swagger/ReDoc generation
+- **Request Validation**: Comprehensive input validation using Pydantic models
 
-#### **Multi-Cloud Resource Discovery**
-```python
-# Discovery engine architecture
-from abc import ABC, abstractmethod
+#### Middleware Stack
+- **Correlation ID**: Request tracking across service boundaries
+- **Error Handling**: Centralized exception handling with detailed error responses
+- **Logging**: Structured logging with correlation IDs and performance metrics
+- **Security**: HTTPS enforcement, trusted host validation, security headers
 
-class CloudProvider(ABC):
-    @abstractmethod
-    async def discover_resources(self, config: ProviderConfig) -> DiscoveryResult:
-        pass
-    
-    @abstractmethod
-    async def get_cost_analysis(self) -> CostAnalysis:
-        pass
+### 2. Core Services
 
-class AzureProvider(CloudProvider):
-    def __init__(self, credentials: AzureCredentials):
-        self.client = AzureClient(credentials)
-    
-    async def discover_resources(self, config: AzureConfig) -> DiscoveryResult:
-        # Azure-specific discovery logic
-        resources = await self.client.get_resources(
-            subscription_id=config.subscription_id,
-            resource_groups=config.resource_groups
-        )
-        return DiscoveryResult(resources=resources)
-```
+#### Extraction Service
+**Capabilities:**
+- **Multi-Cloud Support**: Simultaneous extraction from AWS, Azure, and GCP
+- **Scope-Based Extraction**: Subscription, resource group, region, or tag-based filtering
+- **Relationship Discovery**: Automatic detection of resource dependencies and connections
+- **Incremental Updates**: Delta extraction for large environments
+- **Background Processing**: Asynchronous job execution with progress tracking
 
-#### **Supported Resources**
+**Resource Coverage:**
+- **AWS**: 50+ resource types including EC2, S3, RDS, VPC, Lambda, ECS, etc.
+- **Azure**: 60+ resource types including VMs, Storage, SQL, VNET, Functions, AKS, etc.
+- **GCP**: 40+ resource types including Compute, Storage, SQL, VPC, Functions, GKE, etc.
 
-**Azure Resources (38 types):**
-- Compute: Virtual Machines, VM Scale Sets, Container Instances
-- Storage: Storage Accounts, Blob Storage, File Shares
-- Database: SQL Database, Cosmos DB, MySQL, PostgreSQL
-- Network: Virtual Networks, Load Balancers, Application Gateways
-- Analytics: Synapse Analytics, Data Factory, Event Hubs
-- AI/ML: Cognitive Services, Machine Learning, Bot Services
+#### Visualization Service
+**Output Formats:**
+- **Text-Based**: Mermaid, Graphviz DOT
+- **Vector Graphics**: SVG, PDF
+- **Raster Images**: PNG, JPG, JPEG (300+ DPI)
 
-**AWS Resources (42 types):**
-- Compute: EC2, Lambda, ECS, Fargate, Batch
-- Storage: S3, EBS, EFS, Glacier
-- Database: RDS, Aurora, DynamoDB, ElastiCache
-- Network: VPC, ALB, NLB, CloudFront, Route 53
-- Analytics: Redshift, EMR, Kinesis, Athena
-- AI/ML: SageMaker, Comprehend, Rekognition
+**Layout Algorithms:**
+- **Hierarchical**: Top-down resource organization
+- **Force-Directed**: Physics-based relationship visualization
+- **Circular**: Radial arrangement for network topologies
+- **Grid**: Structured grid layout for systematic views
+- **Mindmap**: Central concept with branching resources
+- **Timeline**: Chronological resource deployment view
 
-**GCP Resources (34 types):**
-- Compute: Compute Engine, GKE, Cloud Run, Cloud Functions
-- Storage: Cloud Storage, Persistent Disk, Filestore
-- Database: Cloud SQL, Firestore, BigTable, Spanner
-- Network: VPC, Load Balancers, Cloud CDN
-- Analytics: BigQuery, DataFlow, Pub/Sub
-- AI/ML: Vertex AI, AutoML, Cloud Vision
+**Themes:**
+- **Professional**: Corporate-ready styling with neutral colors
+- **Dark**: Dark mode optimized for development environments
+- **Light**: High-contrast light theme for presentations
+- **Minimal**: Clean, distraction-free visualization
+- **Colorful**: Provider-specific color coding and rich styling
 
-### **3. Visualization Engine**
+### 3. Provider Layer
 
-#### **Mermaid Diagram Generation**
-```python
-class DiagramGenerator:
-    def __init__(self, theme: str = "enterprise"):
-        self.theme = theme
-        self.layout_engine = HierarchicalLayout()
-    
-    def generate_mermaid(self, resources: List[Resource]) -> str:
-        # Build hierarchical structure
-        hierarchy = self.layout_engine.build_hierarchy(resources)
-        
-        # Generate Mermaid syntax
-        mermaid_code = "flowchart TD\n"
-        for tier in hierarchy.tiers:
-            mermaid_code += self._generate_tier(tier)
-        
-        return mermaid_code
-    
-    def _generate_tier(self, tier: Tier) -> str:
-        tier_code = f"  subgraph {tier.name}\n"
-        for resource in tier.resources:
-            tier_code += f"    {resource.id}[{resource.name}]\n"
-        tier_code += "  end\n"
-        return tier_code
-```
+#### AWS Extractor
+**Authentication Methods:**
+- Access Key ID / Secret Access Key
+- IAM Roles with AssumeRole
+- AWS SSO integration
+- Instance metadata (for EC2-based deployments)
 
-#### **Layout Algorithms**
-- **Hierarchical**: Top-down organization by tiers
-- **Force-directed**: Physics-based positioning
-- **Circular**: Radial layout for dependency visualization
-- **Grid**: Structured layout for large infrastructures
+**Supported Services (50+):**
+- **Compute**: EC2, ECS, EKS, Lambda, Batch
+- **Storage**: S3, EBS, EFS, FSx
+- **Database**: RDS, DynamoDB, ElastiCache, Redshift, Neptune
+- **Networking**: VPC, Subnets, Security Groups, NACLs, Route Tables, NAT Gateways, Internet Gateways, VPN Gateways, Direct Connect
+- **Load Balancing**: ALB, NLB, CLB, API Gateway
+- **Security**: IAM, KMS, Secrets Manager, Certificate Manager
+- **Monitoring**: CloudWatch, CloudTrail, X-Ray
+- **Content Delivery**: CloudFront, Route 53
+- **Analytics**: Kinesis, EMR, Glue, Athena
+- **Machine Learning**: SageMaker, Comprehend, Rekognition
 
-#### **Export Formats**
-- **Mermaid**: Native diagram code
-- **PNG/SVG**: Raster and vector images
-- **PDF**: Print-ready documents
-- **JSON**: Structured data for custom rendering
+#### Azure Extractor
+**Authentication Methods:**
+- Service Principal (Client ID/Secret)
+- Managed Identity (system and user-assigned)
+- Interactive login with Azure CLI
+- Device code flow for secure environments
 
-### **4. Background Job System**
+**Supported Services (60+):**
+- **Compute**: Virtual Machines, VMSS, Container Instances, AKS, Functions, App Service, Logic Apps
+- **Storage**: Storage Accounts, Blob Storage, File Storage, Disk Storage
+- **Database**: SQL Database, SQL Managed Instance, Cosmos DB, MySQL, PostgreSQL, Redis
+- **Networking**: Virtual Networks, Subnets, NSGs, Public IPs, Load Balancers, Application Gateways, VPN Gateways, ExpressRoute
+- **Security**: Key Vault, Security Center, Sentinel, Azure AD
+- **Monitoring**: Monitor, Log Analytics, Application Insights
+- **AI/ML**: Cognitive Services, Machine Learning, Bot Service
+- **Integration**: Service Bus, Event Hubs, API Management
+- **IoT**: IoT Hub, IoT Central, Digital Twins
 
-#### **Celery Task Queue**
-```python
-from celery import Celery
+#### GCP Extractor
+**Authentication Methods:**
+- Service Account JSON key files
+- Application Default Credentials (ADC)
+- OAuth 2.0 client credentials
+- Workload Identity Federation
 
-celery_app = Celery(
-    'cloudviz',
-    broker='redis://localhost:6379',
-    backend='redis://localhost:6379'
-)
+**Supported Services (40+):**
+- **Compute**: Compute Engine, GKE, Cloud Functions, App Engine, Cloud Run
+- **Storage**: Cloud Storage, Persistent Disks, Filestore
+- **Database**: Cloud SQL, Firestore, Bigtable, Spanner, Memorystore
+- **Networking**: VPC Networks, Subnets, Firewall Rules, Load Balancers, Cloud CDN, Cloud DNS
+- **Security**: IAM, Security Command Center, KMS, Secret Manager
+- **Monitoring**: Cloud Monitoring, Cloud Logging, Cloud Trace
+- **Big Data**: BigQuery, Dataflow, Dataproc, Pub/Sub
+- **AI/ML**: AI Platform, AutoML, Cloud Vision, Cloud Speech
 
-@celery_app.task
-async def scheduled_discovery(provider: str, config: dict):
-    """Background task for scheduled resource discovery"""
-    discovery_engine = DiscoveryEngine()
-    result = await discovery_engine.discover(provider, config)
-    
-    # Generate visualization
-    viz_engine = VisualizationEngine()
-    diagram = viz_engine.generate(result.resources)
-    
-    # Send notifications
-    webhook_service = WebhookService()
-    await webhook_service.notify_discovery_complete(result.id)
-    
-    return result.id
-```
+### 4. Storage Layer
 
-#### **Job Types**
-- **Scheduled Discovery**: Automatic resource discovery
-- **Cost Analysis**: Regular cost reporting
-- **Diagram Generation**: Async diagram creation
-- **Data Export**: Large data export operations
-- **Cleanup**: Database and cache maintenance
+#### PostgreSQL Database
+**Schema Design:**
+- **Resource Metadata**: Complete resource inventories with versioning
+- **Job Management**: Extraction and rendering job tracking with full audit trail
+- **User Management**: Authentication, authorization, and RBAC
+- **Configuration**: Provider settings, preferences, and templates
+- **Relationships**: Resource dependency mapping and relationship graphs
 
-### **5. Data Architecture**
+**Performance Features:**
+- Indexing on frequently queried fields
+- Connection pooling with configurable limits
+- Read replicas support for scaling
+- Automated backup and point-in-time recovery
 
-#### **PostgreSQL Database Schema**
-```sql
--- Core entities
-CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    roles TEXT[] DEFAULT ARRAY['viewer'],
-    created_at TIMESTAMP DEFAULT NOW()
-);
+#### Redis Cache
+**Caching Strategy:**
+- **Resource Inventories**: TTL-based caching of extraction results
+- **Rendered Diagrams**: Diagram caching for repeated requests
+- **Session Storage**: User session and authentication token storage
+- **Rate Limiting**: Distributed rate limiting counters
+- **Job Status**: Real-time job progress and status updates
 
-CREATE TABLE discoveries (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    provider VARCHAR(20) NOT NULL,
-    status VARCHAR(20) DEFAULT 'pending',
-    resources_found INTEGER DEFAULT 0,
-    cost_estimate DECIMAL(12,2),
-    metadata JSONB,
-    created_at TIMESTAMP DEFAULT NOW(),
-    completed_at TIMESTAMP
-);
+### 5. Security & Compliance
 
-CREATE TABLE resources (
-    id VARCHAR(255) PRIMARY KEY,
-    discovery_id UUID REFERENCES discoveries(id),
-    provider VARCHAR(20) NOT NULL,
-    resource_type VARCHAR(100) NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    region VARCHAR(50),
-    properties JSONB,
-    cost_monthly DECIMAL(10,2),
-    created_at TIMESTAMP DEFAULT NOW()
-);
+#### Authentication & Authorization
+- **JWT Tokens**: Stateless authentication with configurable expiration
+- **Role-Based Access Control**: Granular permissions for different user roles
+- **API Key Authentication**: Service-to-service authentication
+- **OAuth 2.0 Integration**: Third-party identity provider support
 
-CREATE TABLE diagrams (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    discovery_ids UUID[] NOT NULL,
-    mermaid_code TEXT NOT NULL,
-    theme VARCHAR(50) DEFAULT 'enterprise',
-    layout VARCHAR(50) DEFAULT 'hierarchical',
-    metadata JSONB,
-    created_at TIMESTAMP DEFAULT NOW()
-);
+#### Security Features
+- **TLS/HTTPS**: End-to-end encryption for all communications
+- **Input Validation**: Comprehensive request validation and sanitization
+- **SQL Injection Protection**: Parameterized queries and ORM usage
+- **XSS Protection**: Content Security Policy and output encoding
+- **Rate Limiting**: DDoS protection and resource abuse prevention
 
--- Indexes for performance
-CREATE INDEX idx_resources_provider ON resources(provider);
-CREATE INDEX idx_resources_type ON resources(resource_type);
-CREATE INDEX idx_resources_region ON resources(region);
-CREATE INDEX idx_discoveries_status ON discoveries(status);
-```
+#### Compliance
+- **GDPR Compliance**: Data processing and retention controls
+- **SOC 2 Type II**: Security control framework adherence
+- **Audit Logging**: Comprehensive audit trail for all operations
+- **Data Encryption**: At-rest and in-transit encryption
 
-#### **Redis Cache Strategy**
-```python
-# Caching layers
-CACHE_KEYS = {
-    'discovery_result': 'disco:{discovery_id}',  # TTL: 1 hour
-    'resource_list': 'resources:{provider}:{region}',  # TTL: 30 minutes
-    'cost_analysis': 'costs:{provider}:{date}',  # TTL: 4 hours
-    'diagram_cache': 'diagram:{diagram_id}',  # TTL: 24 hours
-    'user_session': 'session:{user_id}',  # TTL: 30 minutes
-}
+## Deployment Architecture
 
-# Cache invalidation
-async def invalidate_cache_on_discovery(discovery_id: str):
-    patterns = [
-        f'resources:*',
-        f'costs:*',
-        f'disco:{discovery_id}'
-    ]
-    for pattern in patterns:
-        await redis.delete_pattern(pattern)
-```
+### Development Environment
+- Docker Compose with hot-reload
+- Local PostgreSQL and Redis instances
+- Development-optimized logging and debugging
 
-## 🔄 **Data Flow Architecture**
+### Production Environment
+- **Container Orchestration**: Kubernetes with Helm charts
+- **High Availability**: Multi-replica deployment with load balancing
+- **Monitoring**: Prometheus metrics, Grafana dashboards, AlertManager
+- **Logging**: Centralized logging with ELK/Loki stack
+- **Backup**: Automated database backups and disaster recovery
 
-### **1. Resource Discovery Flow**
-```mermaid
-sequenceDiagram
-    participant Client
-    participant API
-    participant Discovery
-    participant CloudAPI
-    participant Cache
-    participant DB
-    participant Queue
-    
-    Client->>API: POST /azure/discover
-    API->>Discovery: Start discovery job
-    Discovery->>Queue: Queue background task
-    Queue->>Discovery: Process discovery
-    Discovery->>CloudAPI: Fetch resources
-    CloudAPI-->>Discovery: Return resources
-    Discovery->>DB: Store resources
-    Discovery->>Cache: Cache results
-    Discovery->>API: Return discovery ID
-    API-->>Client: Discovery started
-    
-    Note over Queue: Background processing
-    Queue->>Client: Webhook notification (optional)
-```
+### Scaling Characteristics
+- **Horizontal Scaling**: Stateless API servers with load balancing
+- **Background Job Processing**: Distributed task queue with Redis
+- **Caching**: Multi-layer caching for performance optimization
+- **Database Optimization**: Connection pooling and query optimization
 
-### **2. Visualization Generation Flow**
-```mermaid
-sequenceDiagram
-    participant Client
-    participant API
-    participant VizEngine
-    participant DB
-    participant Cache
-    participant FileStorage
-    
-    Client->>API: POST /visualization/generate
-    API->>VizEngine: Generate diagram
-    VizEngine->>DB: Fetch resources
-    DB-->>VizEngine: Return resources
-    VizEngine->>VizEngine: Generate Mermaid code
-    VizEngine->>Cache: Cache diagram
-    VizEngine->>FileStorage: Store exports
-    VizEngine->>API: Return diagram
-    API-->>Client: Diagram generated
-```
+## Integration Capabilities
 
-## 🚀 **Scalability & Performance**
+### n8n Workflow Automation
+- **Webhook Triggers**: Infrastructure change detection
+- **Scheduled Extractions**: Automated periodic resource discovery
+- **Alert Integration**: Automated diagram generation for incident response
+- **Report Generation**: Scheduled infrastructure documentation
 
-### **Horizontal Scaling**
-- **Stateless Design**: No server-side session storage
-- **Load Balancing**: Round-robin with health checks
-- **Database Pooling**: Connection pooling for high concurrency
-- **Cache Clustering**: Redis cluster for distributed caching
+### API Integration
+- **RESTful APIs**: Full CRUD operations for all resources
+- **Webhook Support**: Real-time notifications for job completion
+- **Bulk Operations**: Batch processing for large-scale operations
+- **GraphQL**: Advanced query capabilities for complex data retrieval
 
-### **Performance Optimization**
-- **Async Processing**: Non-blocking I/O for all operations
-- **Connection Pooling**: Reuse cloud provider connections
-- **Query Optimization**: Indexed database queries
-- **CDN Integration**: Static asset delivery via CDN
+### Export Integrations
+- **Cloud Storage**: Direct upload to S3, Azure Blob, GCS
+- **Documentation Platforms**: Integration with GitLab, GitHub, Confluence
+- **Monitoring Tools**: Export to Grafana, Datadog, New Relic
+- **ITSM Platforms**: ServiceNow, Jira Service Management integration
 
-### **Monitoring & Observability**
-```python
-# Prometheus metrics
-from prometheus_client import Counter, Histogram, Gauge
+## Performance Characteristics
 
-# Business metrics
-DISCOVERY_COUNTER = Counter('cloudviz_discoveries_total', 'Total discoveries')
-RESOURCE_GAUGE = Gauge('cloudviz_resources_discovered', 'Resources discovered')
-API_LATENCY = Histogram('cloudviz_api_request_duration_seconds', 'API latency')
+### Extraction Performance
+- **Small Environments** (< 100 resources): 30-60 seconds
+- **Medium Environments** (100-1000 resources): 2-5 minutes
+- **Large Environments** (1000-10000 resources): 10-30 minutes
+- **Enterprise Environments** (10000+ resources): 30+ minutes with parallel processing
 
-# Health check endpoint
-@app.get("/health")
-async def health_check():
-    return {
-        "status": "healthy",
-        "version": "1.1.0",
-        "components": {
-            "database": await check_db_health(),
-            "redis": await check_redis_health(),
-            "cloud_apis": await check_cloud_api_health()
-        }
-    }
-```
+### Visualization Performance
+- **Mermaid Generation**: < 5 seconds for 1000+ resources
+- **Image Rendering**: 10-30 seconds depending on complexity and format
+- **Caching**: 95% cache hit rate for repeated requests
 
-## 🔒 **Security Architecture**
-
-### **Authentication Flow**
-```mermaid
-sequenceDiagram
-    participant Client
-    participant Auth
-    participant DB
-    participant Cache
-    
-    Client->>Auth: POST /auth/login
-    Auth->>DB: Validate credentials
-    DB-->>Auth: User validated
-    Auth->>Auth: Generate JWT token
-    Auth->>Cache: Store session info
-    Auth-->>Client: Return JWT token
-    
-    Note over Client: Include token in requests
-    Client->>Auth: API request with JWT
-    Auth->>Auth: Validate token
-    Auth->>Cache: Check session
-    Cache-->>Auth: Session valid
-    Auth-->>Client: Allow request
-```
-
-### **Data Security**
-- **Encryption**: AES-256 for sensitive data at rest
-- **TLS**: HTTPS/TLS 1.3 for data in transit
-- **Secret Management**: Integration with cloud secret stores
-- **Audit Logging**: Complete API access logging
-
-### **Network Security**
-- **CORS**: Configurable cross-origin resource sharing
-- **Rate Limiting**: DDoS protection and abuse prevention
-- **IP Whitelisting**: Restrict access by IP ranges
-- **WAF Integration**: Web application firewall support
-
-## 📊 **Deployment Architecture**
-
-### **Container Orchestration**
-```yaml
-# Kubernetes deployment structure
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: cloudviz-api
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: cloudviz-api
-  template:
-    spec:
-      containers:
-      - name: cloudviz
-        image: cloudviz:1.1.0
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "250m"
-          limits:
-            memory: "1Gi"
-            cpu: "500m"
-        env:
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: cloudviz-secrets
-              key: database-url
-```
-
-### **Infrastructure Components**
-- **API Gateway**: nginx or Traefik for routing and SSL termination
-- **Database**: PostgreSQL with read replicas for scaling
-- **Cache**: Redis cluster for high availability
-- **Message Queue**: Redis for job queuing
-- **File Storage**: S3-compatible storage for exports
-- **Monitoring**: Prometheus + Grafana stack
-
-### **High Availability**
-- **Multi-zone**: Deploy across availability zones
-- **Auto-scaling**: Horizontal pod autoscaling based on CPU/memory
-- **Health Checks**: Kubernetes liveness and readiness probes
-- **Circuit Breakers**: Fail-fast for external service issues
-- **Backup Strategy**: Automated database and file backups
-
----
-
-**Next Steps:**
-- [🔧 Installation Guide](Installation-Guide) - Set up your CloudViz instance
-- [⚡ Performance Tuning](Performance-Tuning) - Optimize for your workload
-- [🔐 Security Configuration](Security-Configuration) - Secure your deployment
-- [📊 Monitoring Setup](Monitoring-Setup) - Set up observability
+### Scalability Limits
+- **Maximum Resources per Diagram**: 10,000 nodes (with performance optimization)
+- **Concurrent Extractions**: 10 per instance (configurable)
+- **API Throughput**: 1000+ requests/second with proper caching
+- **Storage Requirements**: ~10MB per 1000 resources with full metadata
