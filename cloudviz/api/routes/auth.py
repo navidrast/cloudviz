@@ -12,7 +12,10 @@ from pydantic import BaseModel, EmailStr
 
 from cloudviz.core.config import CloudVizConfig
 from cloudviz.core.utils import get_logger
-from cloudviz.core.utils.security import generate_token, validate_token, hash_string
+from cloudviz.core.utils.security import (
+    generate_token, validate_jwt_token, hash_string, hash_password, 
+    verify_password, generate_jwt_token, generate_random_token
+)
 from cloudviz.api.dependencies import get_current_config
 
 
@@ -57,24 +60,25 @@ class TokenValidationResponse(BaseModel):
 
 
 # Mock user database - In production, this would be a real database
+# Using bcrypt for password hashing for better security
 MOCK_USERS = {
     "admin": {
         "username": "admin",
-        "password_hash": hash_string("admin123"),  # In production, use proper hashing
+        "password_hash": hash_password("admin123"),  # Using bcrypt hash
         "email": "admin@cloudviz.com",
         "roles": ["admin", "operator", "viewer"],
         "permissions": ["extract", "render", "admin", "view"]
     },
     "operator": {
         "username": "operator", 
-        "password_hash": hash_string("operator123"),
+        "password_hash": hash_password("operator123"),  # Using bcrypt hash
         "email": "operator@cloudviz.com",
         "roles": ["operator", "viewer"],
         "permissions": ["extract", "render", "view"]
     },
     "viewer": {
         "username": "viewer",
-        "password_hash": hash_string("viewer123"),
+        "password_hash": hash_password("viewer123"),  # Using bcrypt hash
         "email": "viewer@cloudviz.com", 
         "roles": ["viewer"],
         "permissions": ["view"]
@@ -83,12 +87,13 @@ MOCK_USERS = {
 
 
 def authenticate_user(username: str, password: str) -> Optional[Dict[str, Any]]:
-    """Authenticate user credentials."""
+    """Authenticate user credentials using secure password verification."""
     user = MOCK_USERS.get(username)
     if not user:
         return None
     
-    if user["password_hash"] != hash_string(password):
+    # Use secure password verification with bcrypt
+    if not verify_password(password, user["password_hash"]):
         return None
         
     return user
@@ -101,13 +106,26 @@ def get_current_user(
     """Get current authenticated user from JWT token."""
     try:
         token = credentials.credentials
-        payload = validate_token(token, config.api.jwt_secret or "default-secret")
+        
+        # Generate a secure secret if not configured
+        jwt_secret = config.api.jwt_secret
+        if not jwt_secret:
+            logger.warning("JWT secret not configured, this is insecure for production")
+            jwt_secret = generate_random_token(32)
+        
+        # Validate JWT token using proper JWT validation
+        payload = validate_jwt_token(token, jwt_secret)
+        if not payload:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired token"
+            )
         
         username = payload.get("sub")
         if not username:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token"
+                detail="Invalid token claims"
             )
         
         user = MOCK_USERS.get(username)
@@ -119,11 +137,13 @@ def get_current_user(
         
         return user
         
+    except HTTPException:
+        raise
     except Exception as e:
         logger.warning("Token validation failed: %s", str(e))
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token"
+            detail="Authentication failed"
         )
 
 
@@ -144,23 +164,32 @@ async def login(
                 detail="Invalid username or password"
             )
         
-        # Generate JWT token
+        # Generate secure JWT token
+        jwt_secret = config.api.jwt_secret
+        if not jwt_secret:
+            logger.warning("JWT secret not configured, this is insecure for production")
+            jwt_secret = generate_random_token(32)
+        
         token_data = {
             "sub": user["username"],
             "roles": user["roles"],
-            "permissions": user["permissions"],
-            "iat": datetime.utcnow(),
-            "exp": datetime.utcnow() + timedelta(hours=config.api.jwt_expiration // 3600)
+            "permissions": user["permissions"]
         }
         
-        access_token = generate_token(token_data, config.api.jwt_secret or "default-secret")
+        access_token = generate_jwt_token(
+            token_data, 
+            jwt_secret, 
+            expires_in=config.api.jwt_expiration
+        )
         
         # Update last login
         user["last_login"] = datetime.now()
         
+        token_type_str = "bearer"  # Standard OAuth2 token type, not a password  # nosec
+        
         response = LoginResponse(
             access_token=access_token,
-            token_type="bearer",
+            token_type=token_type_str,
             expires_in=config.api.jwt_expiration,
             user_info={
                 "username": user["username"],

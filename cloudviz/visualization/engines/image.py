@@ -135,15 +135,22 @@ class ImageEngine(VisualizationEngine, LoggerMixin):
                 mermaid_theme = self._map_theme_to_mermaid(theme)
                 cmd.extend(['-t', mermaid_theme])
             
-            # Add dimensions
+            # Add dimensions with validation
             if self.width:
-                cmd.extend(['-w', str(self.width)])
+                width_val = int(self.width)  # Validate as integer
+                if 1 <= width_val <= 10000:  # Reasonable bounds
+                    cmd.extend(['-w', str(width_val)])
             if self.height:
-                cmd.extend(['-H', str(self.height)])
+                height_val = int(self.height)  # Validate as integer
+                if 1 <= height_val <= 10000:  # Reasonable bounds
+                    cmd.extend(['-H', str(height_val)])
             
-            # Add background
+            # Add background with validation
             if self.background_color and self.background_color != 'transparent':
-                cmd.extend(['-b', self.background_color])
+                # Validate background color format (hex, rgb, named)
+                import re
+                if re.match(r'^#[0-9A-Fa-f]{6}$|^rgb\(\d+,\d+,\d+\)$|^[a-zA-Z]+$', self.background_color):
+                    cmd.extend(['-b', self.background_color])
             
             # Add puppeteer config
             if self.puppeteer_config:
@@ -299,7 +306,7 @@ class ImageEngine(VisualizationEngine, LoggerMixin):
         return layout in ['hierarchical', 'flowchart', 'mindmap', 'timeline']
     
     def _map_theme_to_mermaid(self, theme: str) -> str:
-        """Map CloudViz theme to Mermaid theme."""
+        """Map CloudViz theme to Mermaid theme with validation."""
         theme_map = {
             'professional': 'default',
             'dark': 'dark',
@@ -307,7 +314,11 @@ class ImageEngine(VisualizationEngine, LoggerMixin):
             'minimal': 'neutral',
             'colorful': 'forest'
         }
-        return theme_map.get(theme, 'default')
+        # Validate theme is in allowed list to prevent injection
+        if theme not in theme_map:
+            self.log_warning(f"Unknown theme '{theme}', using default")
+            return 'default'
+        return theme_map[theme]
     
     def _get_graphviz_tool(self, layout: str) -> str:
         """Get appropriate Graphviz tool for layout."""

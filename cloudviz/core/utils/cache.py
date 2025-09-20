@@ -61,7 +61,7 @@ class CacheKey:
         
         if self.additional_params:
             params_str = json.dumps(self.additional_params, sort_keys=True, separators=(',', ':'))
-            params_hash = hashlib.md5(params_str.encode()).hexdigest()[:8]
+            params_hash = hashlib.sha256(params_str.encode()).hexdigest()[:8]
             key_parts.append(f"params:{params_hash}")
         
         return ":".join(key_parts)

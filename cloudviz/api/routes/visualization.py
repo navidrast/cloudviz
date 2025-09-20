@@ -68,11 +68,11 @@ class RenderRequest(BaseModel):
     layout: LayoutAlgorithm = Field(default=LayoutAlgorithm.HIERARCHICAL, description="Layout algorithm")
     options: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Additional rendering options")
     
-    # Image-specific options
-    width: Optional[int] = Field(default=None, description="Image width in pixels")
-    height: Optional[int] = Field(default=None, description="Image height in pixels")
-    dpi: Optional[int] = Field(default=300, description="Image DPI for raster formats")
-    background_color: Optional[str] = Field(default="white", description="Background color")
+    # Image-specific options with validation
+    width: Optional[int] = Field(default=None, ge=1, le=10000, description="Image width in pixels (1-10000)")
+    height: Optional[int] = Field(default=None, ge=1, le=10000, description="Image height in pixels (1-10000)")
+    dpi: Optional[int] = Field(default=300, ge=72, le=600, description="Image DPI for raster formats (72-600)")
+    background_color: Optional[str] = Field(default="white", regex=r'^(#[0-9A-Fa-f]{6}|[a-zA-Z]+|rgb\(\d+,\d+,\d+\)|transparent)$', description="Background color")
 
 
 class RenderResponse(BaseModel):
