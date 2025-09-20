@@ -6,15 +6,12 @@ This comprehensive guide covers all installation methods, configuration options,
 
 1. [Prerequisites](#prerequisites)
 2. [Installation Methods](#installation-methods)
-3. [Quick Start](#quick-start)
-4. [Docker Installation](#docker-installation)
-5. [Local Development Setup](#local-development-setup)
-6. [Production Deployment](#production-deployment)
-7. [Configuration](#configuration)
-8. [Cloud Provider Setup](#cloud-provider-setup)
-9. [Verification](#verification)
-10. [Troubleshooting](#troubleshooting)
-11. [Upgrading](#upgrading)
+3. [Docker Installation (Recommended)](#docker-installation)
+4. [Python Development Setup](#python-development-setup)
+5. [Configuration](#configuration)
+6. [Verification & Testing](#verification--testing)
+7. [Troubleshooting](#troubleshooting)
+8. [Production Deployment](#production-deployment)
 
 ## Prerequisites
 
@@ -26,28 +23,103 @@ This comprehensive guide covers all installation methods, configuration options,
 - **Storage**: 10GB available disk space
 - **Operating System**: Linux, macOS, or Windows 10+
 
-#### Recommended Requirements
+#### Recommended Requirements (Production)
 - **CPU**: 4+ cores
 - **Memory**: 8GB+ RAM
-- **Storage**: 50GB+ available disk space (for large environments)
+- **Storage**: 50GB+ available disk space
 - **Operating System**: Ubuntu 20.04+, macOS 11+, Windows 11+
 
 ### Software Dependencies
 
-#### Required Software
-- **Python 3.8+** (for local installation)
-- **Docker 20.10+** and **Docker Compose 2.0+** (for containerized deployment)
-- **Node.js 16+** (for Mermaid diagram rendering)
-- **Git** (for source installation)
+#### For Docker Installation (Recommended)
+- **Docker Desktop 4.10+** or **Docker Engine 20.10+**
+- **Docker Compose 2.0+** (included with Docker Desktop)
+- **Git** (for cloning repository)
 
-#### Optional Software
-- **PostgreSQL 13+** (if not using Docker)
-- **Redis 6+** (if not using Docker)
-- **Nginx** (for production reverse proxy)
-- **Kubernetes** (for production orchestration)
+#### For Python Development Setup
+- **Python 3.8+** (Python 3.13+ recommended)
+- **pip** (Python package manager)
+- **Git** (for cloning repository)
 
 ### Network Requirements
 - **Outbound HTTPS (443)**: Access to cloud provider APIs
+- **Port 8000**: CloudViz API (configurable)
+- **Port 8080**: Nginx proxy (Docker deployment only)
+
+## Installation Methods
+
+### Method 1: Docker Installation (Recommended)
+
+**Advantages:**
+- ✅ Production-ready configuration
+- ✅ All dependencies handled automatically
+- ✅ Database persistence included
+- ✅ Redis caching configured
+- ✅ Nginx reverse proxy
+- ✅ Health checks and auto-restart
+- ✅ Easy scaling and updates
+
+**Steps:**
+
+1. **Clone Repository**
+   ```bash
+   git clone https://github.com/navidrast/cloudviz.git
+   cd cloudviz
+   ```
+
+2. **Start Services**
+   ```bash
+   docker compose up -d
+   ```
+
+3. **Verify Installation**
+   ```bash
+   # Check container status
+   docker compose ps
+   
+   # Test API health
+   curl http://localhost:8000/health
+   
+   # View API documentation
+   # Visit: http://localhost:8000/docs
+   ```
+
+### Method 2: Python Development Setup
+
+**Advantages:**
+- ✅ Full development control
+- ✅ Direct code access
+- ✅ Custom configurations
+- ✅ Debugging capabilities
+
+**Steps:**
+
+1. **Clone Repository**
+   ```bash
+   git clone https://github.com/navidrast/cloudviz.git
+   cd cloudviz
+   ```
+
+2. **Create Virtual Environment**
+   ```bash
+   # Windows
+   python -m venv venv
+   venv\Scripts\activate
+   
+   # Linux/Mac
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
+
+3. **Install Dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Start Development Server**
+   ```bash
+   uvicorn cloudviz.api.main:app --reload --host 0.0.0.0 --port 8000
+   ```
 - **Outbound HTTP/HTTPS**: Package downloads and updates
 - **Inbound HTTP (8000)**: API server access
 - **Inbound HTTPS (443)**: Production web interface

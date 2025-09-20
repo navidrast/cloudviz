@@ -3,9 +3,54 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)](https://fastapi.tiangolo.com/)
+[![Docker](https://img.shields.io/badge/Docker-Enabled-blue.svg)](https://docker.com/)
 [![Mermaid](https://img.shields.io/badge/Mermaid-Diagrams-ff69b4.svg)](https://mermaid.js.org/)
 
 **CloudViz** is an enterprise-grade, multi-cloud infrastructure visualization platform that automatically discovers cloud resources and generates beautiful, interactive diagrams. Built with FastAPI and featuring powerful Mermaid diagram generation, CloudViz provides REST APIs perfect for automation workflows, especially **n8n integration**.
+
+## 🚀 **Quick Start - Choose Your Deployment Method**
+
+### Method 1: Docker (Recommended - Production Ready)
+```bash
+# Clone and navigate to the repository
+git clone https://github.com/navidrast/cloudviz.git
+cd cloudviz
+
+# Start the complete stack (API + Database + Cache + Proxy)
+docker compose up -d
+
+# Access the application
+curl http://localhost:8000/health
+# or visit http://localhost:8000/docs for API documentation
+```
+
+### Method 2: Python Development Environment
+```bash
+# Clone the repository
+git clone https://github.com/navidrast/cloudviz.git
+cd cloudviz
+
+# Create and activate virtual environment
+python -m venv venv
+venv\Scripts\activate  # Windows
+# source venv/bin/activate  # Linux/Mac
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the application
+uvicorn cloudviz.api.main:app --reload
+
+# Access at http://localhost:8000
+```
+
+### ✅ **Verification Script**
+Both methods include an automated verification script:
+```powershell
+# Windows PowerShell
+.\scripts\verify-installation.ps1 -Method docker    # For Docker method
+.\scripts\verify-installation.ps1 -Method python   # For Python method
+```
 
 ## 🎨 **Live Infrastructure Visualization Demo**
 
@@ -407,41 +452,92 @@ CloudViz is designed for seamless integration with n8n automation workflows:
 }
 ```
 
-## ⚙️ **Quick Start**
+## ⚙️ **Deployment & Installation**
 
-### Environment Setup
+### 🐳 **Docker Deployment (Recommended)**
+The most reliable and production-ready method:
+
 ```bash
 # Clone repository
 git clone https://github.com/navidrast/cloudviz.git
 cd cloudviz
 
+# Start the complete stack (automatically handles all dependencies)
+docker compose up -d
+
+# Verify deployment
+curl http://localhost:8000/health
+# Expected: {"status":"healthy","version":"1.0.0","timestamp":"..."}
+
+# View API documentation
+# Visit: http://localhost:8000/docs
+```
+
+**What Docker Deployment Includes:**
+- ✅ CloudViz API server (FastAPI)
+- ✅ PostgreSQL database with persistence
+- ✅ Redis cache for performance
+- ✅ Nginx reverse proxy
+- ✅ Health checks and auto-restart
+- ✅ Production-grade configuration
+
+### 🐍 **Python Development Setup**
+For development and customization:
+
+```bash
+# Clone repository
+git clone https://github.com/navidrast/cloudviz.git
+cd cloudviz
+
+# Create virtual environment
+python -m venv venv
+venv\Scripts\activate  # Windows
+# source venv/bin/activate  # Linux/Mac
+
 # Install dependencies
 pip install -r requirements.txt
 
-# Set environment variables
-export AZURE_CLIENT_ID=your-azure-client-id
-export AZURE_CLIENT_SECRET=your-azure-client-secret
-export AZURE_TENANT_ID=your-azure-tenant-id
-
-# AWS Configuration
-export AWS_ACCESS_KEY_ID=your-aws-access-key
-export AWS_SECRET_ACCESS_KEY=your-aws-secret-key
-
-# GCP Configuration
-export GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account.json
-export GCP_PROJECT_ID=your-gcp-project-id
-
-# Start the API server
+# Start development server
 uvicorn cloudviz.api.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### Docker Deployment
-```bash
-# Build and run with Docker Compose
-docker-compose up -d
+### 🔧 **Environment Configuration**
+Create a `.env` file (copy from `.env.example`):
 
-# Access the API
-curl http://localhost:8000/health
+```bash
+# Azure Configuration
+AZURE_CLIENT_ID=your-azure-client-id
+AZURE_CLIENT_SECRET=your-azure-client-secret
+AZURE_TENANT_ID=your-azure-tenant-id
+
+# AWS Configuration
+AWS_ACCESS_KEY_ID=your-aws-access-key
+AWS_SECRET_ACCESS_KEY=your-aws-secret-key
+AWS_DEFAULT_REGION=us-east-1
+
+# GCP Configuration
+GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account.json
+GCP_PROJECT_ID=your-gcp-project-id
+
+# Database (Docker handles this automatically)
+DATABASE_URL=postgresql://cloudviz:cloudviz@localhost:5432/cloudviz
+```
+
+### ✅ **Automated Verification**
+Both deployment methods include comprehensive verification:
+
+```powershell
+# Verify Docker deployment
+.\scripts\verify-installation.ps1 -Method docker
+
+# Verify Python development setup
+.\scripts\verify-installation.ps1 -Method python
+
+# Sample output:
+# [OK] All tests passed! CloudViz environment is ready.
+# [OK] API Status: healthy, Version: 1.0.0
+# [OK] Health endpoint is accessible
+# [OK] API documentation is accessible
 ```
 
 ## 📚 **API Endpoints**
