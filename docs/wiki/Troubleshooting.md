@@ -378,10 +378,10 @@ env | grep -E "(CLOUDVIZ|DATABASE|REDIS)" | sed 's/=.*/=***/'
 
 ### Support Resources
 
-- 📋 [GitHub Issues](https://github.com/navidrast/cloudviz/issues)
-- 📖 [Documentation Wiki](https://github.com/navidrast/cloudviz/wiki)
-- 🔧 [Configuration Guide](Configuration.md)
-- 🚀 [Quick Start Guide](Quick-Start.md)
+- [GitHub Issues](https://github.com/navidrast/cloudviz/issues)
+- [Documentation Wiki](https://github.com/navidrast/cloudviz/wiki)
+- [Configuration Guide](Configuration.md)
+- [Quick Start Guide](Quick-Start.md)
 
 ---
 

@@ -2,19 +2,19 @@
 
 Welcome to the comprehensive CloudViz documentation! This wiki provides detailed information about installation, configuration, usage, and integration of CloudViz.
 
-## 📚 **Documentation Structure**
+## Documentation Structure
 
-### **Getting Started**
-- [📦 Installation Guide](Installation-Guide.md) - Complete setup instructions for all platforms
-- [⚡ Quick Start](Quick-Start.md) - Get CloudViz running in 5 minutes
-- [🔧 Configuration](Configuration.md) - Detailed configuration guide for all components
+### Getting Started
+- [Installation Guide](Installation-Guide.md) - Complete setup instructions for all platforms
+- [Quick Start](Quick-Start.md) - Get CloudViz running in 5 minutes
+- [Configuration](Configuration.md) - Detailed configuration guide for all components
 
-### **Core Documentation**
-- [🏛️ System Architecture](System-Architecture.md) - Technical architecture and design
-- [🔌 API Reference](API-Reference.md) - Complete REST API documentation
-- [⚡ n8n Integration](n8n-Integration.md) - Workflow automation with n8n
+### Core Documentation
+- [System Architecture](System-Architecture.md) - Technical architecture and design
+- [API Reference](API-Reference.md) - Complete REST API documentation
+- [n8n Integration](n8n-Integration.md) - Workflow automation with n8n
 
-## 🚀 **Quick Navigation**
+## Quick Navigation
 
 | Topic | Description | File |
 |-------|-------------|------|
@@ -25,14 +25,14 @@ Welcome to the comprehensive CloudViz documentation! This wiki provides detailed
 | **Architecture** | System design and components | [System-Architecture.md](System-Architecture.md) |
 | **n8n Automation** | Workflow integration | [n8n-Integration.md](n8n-Integration.md) |
 
-## 📖 **How to Use This Documentation**
+## How to Use This Documentation
 
 1. **New Users**: Start with [Quick Start](Quick-Start.md)
 2. **Administrators**: Review [Installation Guide](Installation-Guide.md) and [Configuration](Configuration.md)
 3. **Developers**: Check [API Reference](API-Reference.md) and [System Architecture](System-Architecture.md)
 4. **DevOps Teams**: Explore [n8n Integration](n8n-Integration.md) for automation
 
-## 🌐 **GitHub Wiki**
+## GitHub Wiki
 
 These documentation files can be easily imported into GitHub Wiki:
 
@@ -40,12 +40,12 @@ These documentation files can be easily imported into GitHub Wiki:
 2. Create new pages with the same names as these files
 3. Copy and paste the content from each markdown file
 
-## 🔄 **Keeping Documentation Updated**
+## Keeping Documentation Updated
 
 This documentation is maintained alongside the codebase to ensure accuracy and completeness. When updating CloudViz features, remember to update the corresponding documentation files.
 
 ---
 
-**CloudViz Version**: 1.1.0  
-**Last Updated**: September 20, 2025  
+**CloudViz Version**: 1.2.0-enterprise  
+**Last Updated**: September 22, 2025  
 **Repository**: [https://github.com/navidrast/cloudviz](https://github.com/navidrast/cloudviz)
