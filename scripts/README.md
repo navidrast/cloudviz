@@ -20,7 +20,7 @@ This directory contains automation scripts for CloudViz installation, deployment
 - **`deploy_wiki.py`** - Documentation deployment
 - **`wiki_setup_helper.py`** - Wiki configuration helper
 
-## 🚀 Quick Usage
+## Quick Usage
 
 ### Windows Installation
 ```powershell

@@ -151,7 +151,7 @@ INCIDENT_EMAIL=incidents@your-company.com
 ```javascript
 // Slack notification customization
 {
-  "text": "🔍 *Infrastructure Discovery Complete*\n\nResources Found: {{$json.resource_count}}\nRegions: {{$json.regions}}\nDiagram: {{$json.diagram_url}}",
+  "text": "*Infrastructure Discovery Complete*\n\nResources Found: {{$json.resource_count}}\nRegions: {{$json.regions}}\nDiagram: {{$json.diagram_url}}",
   "attachments": [
     {
       "color": "good",

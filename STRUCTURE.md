@@ -35,7 +35,7 @@ cloudviz/
 └── pyproject.toml            # Python project configuration
 ```
 
-## 🏗️ Architecture Overview
+## Architecture Overview
 
 ### Core Package (`cloudviz/`)
 - **`api/`**: FastAPI REST API implementation
@@ -58,14 +58,14 @@ cloudviz/
 - **`config/`**: Environment-specific configuration templates
 - **`.env.example`**: Environment variables template
 
-## 🚀 Getting Started
+## Getting Started
 
 1. **Clone the repository**
 2. **Follow the installation guide**: [docs/wiki/Installation-Guide.md](docs/wiki/Installation-Guide.md)
 3. **Configure environment**: Copy `.env.example` to `.env` and configure
 4. **Deploy**: Use Docker (`docker compose up`) or Python (`pip install -e .`)
 
-## 📚 Key Files
+## Key Files
 
 - **`README.md`**: Project overview and quick start
 - **`pyproject.toml`**: Python packaging and tool configuration
@@ -73,7 +73,7 @@ cloudviz/
 - **`nginx.conf`**: Production reverse proxy configuration
 - **`.env.example`**: Environment configuration template
 
-## 🔧 Development
+## Development
 
 For development setup and contribution guidelines, see:
 - [docs/wiki/Installation-Guide.md](docs/wiki/Installation-Guide.md) - Development setup
