@@ -1,13 +1,7 @@
-# CloudViz - Cloud Infrastructure Visualization Platform
-# Production-ready dependencies for REST API and Mermaid visualization
+# CloudViz - Main Requirements File
+# Install all dependencies: pip install -r requirements.txt
 
-# Core FastAPI and web dependencies
-fastapi>=0.104.0,<1.0.0
-uvicorn[standard]>=0.24.0,<1.0.0
-pydantic>=2.4.0,<3.0.0
-pydantic-settings>=2.0.0,<3.0.0
-httpx>=0.25.0,<1.0.0
-aiofiles>=23.2.0,<24.0.0
+-r requirements/base.txt
 python-multipart>=0.0.6,<1.0.0
 
 # Authentication and security

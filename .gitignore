@@ -27,6 +27,18 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+# CloudViz specific
+logs/
+output/
+venv/
+.env
+*.log
+
+# Development artifacts
+*-Report.md
+*-SUMMARY.md
+*-Guide-Tested.md
+
 # PyInstaller
 *.manifest
 *.spec

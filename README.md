@@ -5,48 +5,128 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)](https://fastapi.tiangolo.com/)
 [![Mermaid](https://img.shields.io/badge/Mermaid-Diagrams-ff69b4.svg)](https://mermaid.js.org/)
 
-**CloudViz** is an enterprise-grade, multi-cloud infrastructure visualization platform that automatically discovers cloud resources and generates beautiful, interactive diagrams. Built with FastAPI and featuring powerful Mermaid diagram generation, CloudViz provides REST APIs perfect for automation workflows, especially **n8n integration**.
+**CloudViz** is an enterprise-grade, multi-cloud infrastructure visualization platform that automatically discovers cloud resources and generates beautiful, interactive diagrams. Built with FastAPI and featuring powerful Mermaid diagram generation, CloudViz provides REST APIs perfect for automation workflows.
 
-## 🎨 **Live Infrastructure Visualization Demo**
+## ✨ Key Features
 
-CloudViz automatically generates comprehensive infrastructure diagrams from your cloud resources with hierarchical organization:
+- 🔍 **Multi-Cloud Discovery**: Automatically scan Azure, AWS, and GCP resources
+- 📊 **Interactive Diagrams**: Generate Mermaid, Graphviz, and custom visualizations  
+- 🚀 **REST API**: Complete API for automation and integration workflows
+- 🔄 **n8n Integration**: Pre-built workflows for automation platforms
+- 🏢 **Enterprise Ready**: Production deployment with Docker and comprehensive documentation
+- � **Multiple Formats**: Export diagrams as SVG, PNG, PDF, and interactive HTML
 
-### 🏢 **Azure Enterprise Architecture - Hierarchical View**
-*Auto-generated from Azure subscription scan - enterprise infrastructure example*
+## 🚀 Quick Start
 
-```mermaid
-flowchart TD
-    INTERNET[🌍 Internet Users]
-    
-    INTERNET --> CDN_LAYER[🚀 Global CDN Layer]
-    
-    CDN_LAYER --> AZURE_CLOUD{🔷 Azure Cloud Platform}
-    
-    AZURE_CLOUD --> AU_EAST[🌏 Australia East - Primary]
-    AZURE_CLOUD --> AU_SOUTHEAST[🌏 Australia Southeast - DR]
-    
-    AU_EAST --> NETWORK_TIER[🌐 Network & Security Tier]
-    AU_EAST --> APPLICATION_TIER[💼 Application Services Tier]
-    AU_EAST --> DATA_TIER[🗄️ Data & Analytics Tier]
-    AU_EAST --> SECURITY_TIER[🔐 Security & Compliance Tier]
-    
-    NETWORK_TIER --> firewall[🛡️ Azure Firewall Premium - $1456/month]
-    NETWORK_TIER --> appgw[🌐 Application Gateway v2 - $378/month]
-    NETWORK_TIER --> cdn[🚀 Global Telecom CDN - $198/month]
-    NETWORK_TIER --> vnet_hub[🔗 Hub VNet 10.0.0.0/16]
-    NETWORK_TIER --> expressroute[⚡ ExpressRoute Gateway - $445/month]
-    NETWORK_TIER --> vpn_gateway[🔒 VPN Gateway - $234/month]
-    
-    APPLICATION_TIER --> vmss_billing[🔄 Billing VMSS 5-15 instances - $1234/month]
-    APPLICATION_TIER --> vmss_crm[🔄 CRM VMSS 3-12 instances - $897/month]
-    APPLICATION_TIER --> redis_session[⚡ Session Redis Cache 52GB - $1246/month]
-    APPLICATION_TIER --> service_fabric[⚙️ OSS Service Fabric 6 nodes - $567/month]
-    
-    DATA_TIER --> sqlserver[🏛️ Telecom SQL Server Business Critical]
-    DATA_TIER --> sqldb_billing[💾 Billing Database 5TB - $3456/month]
-    DATA_TIER --> sqldb_customer[💾 Customer Database 2TB - $1789/month]
-    DATA_TIER --> cosmos_network[🌐 Network Topology DB Multi-master - $1567/month]
-    DATA_TIER --> synapse[📊 Telecom Synapse DW1000c - $2890/month]
+### Option 1: Docker (Recommended)
+```bash
+git clone https://github.com/navidrast/cloudviz.git
+cd cloudviz
+cp .env.example .env
+# Edit .env with your cloud provider credentials
+docker compose up -d
+```
+
+### Option 2: Python Development
+```bash
+git clone https://github.com/navidrast/cloudviz.git
+cd cloudviz
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -e .
+cp .env.example .env
+# Edit .env with your cloud provider credentials
+uvicorn cloudviz.api.main:app --reload
+```
+
+Access CloudViz at: **http://localhost:8000**  
+API Documentation: **http://localhost:8000/docs**
+
+## 📋 Requirements
+
+- **Python**: 3.8 or higher
+- **Cloud Access**: Valid credentials for Azure, AWS, or GCP
+- **Docker**: For containerized deployment (optional)
+- **Node.js**: For Mermaid diagram generation (optional)
+
+## �️ Architecture
+
+CloudViz follows a modular architecture with clear separation of concerns:
+
+- **API Layer**: FastAPI-based REST API
+- **Extraction Engine**: Multi-cloud resource discovery
+- **Visualization Engine**: Diagram generation and rendering
+- **Storage Layer**: PostgreSQL for persistence, Redis for caching
+
+## 📚 Documentation
+
+- **[Installation Guide](docs/wiki/Installation-Guide.md)** - Complete setup instructions
+- **[API Reference](docs/wiki/API-Reference.md)** - Complete API documentation  
+- **[Configuration](docs/wiki/Configuration.md)** - Configuration options
+- **[Production Deployment](docs/PRODUCTION-DEPLOYMENT.md)** - Production setup guide
+- **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
+- **[n8n Integration](docs/wiki/n8n-Integration.md)** - Automation workflows
+
+## 🔧 Configuration
+
+Copy `.env.example` to `.env` and configure your cloud provider credentials:
+
+```bash
+# Azure
+AZURE_TENANT_ID=your-tenant-id
+AZURE_CLIENT_ID=your-client-id  
+AZURE_CLIENT_SECRET=your-client-secret
+
+# AWS
+AWS_ACCESS_KEY_ID=your-access-key
+AWS_SECRET_ACCESS_KEY=your-secret-key
+AWS_DEFAULT_REGION=us-east-1
+
+# GCP
+GCP_PROJECT_ID=your-project-id
+GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
+```
+
+## 🚦 API Usage
+
+### Extract Infrastructure
+```bash
+# Extract Azure resources
+curl -X POST "http://localhost:8000/api/v1/extract/azure" \
+  -H "Content-Type: application/json" \
+  -d '{"subscription_ids": ["your-subscription-id"]}'
+
+# Extract AWS resources  
+curl -X POST "http://localhost:8000/api/v1/extract/aws" \
+  -H "Content-Type: application/json" \
+  -d '{"regions": ["us-east-1", "us-west-2"]}'
+```
+
+### Generate Diagrams
+```bash
+# Generate Mermaid diagram
+curl -X POST "http://localhost:8000/api/v1/render/mermaid" \
+  -H "Content-Type: application/json" \
+  -d '{"inventory_file": "inventory.json", "layout": "hierarchical"}'
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+- **Documentation**: [docs/](docs/)
+- **Issues**: [GitHub Issues](https://github.com/navidrast/cloudviz/issues)
+- **API Docs**: http://localhost:8000/docs (when running)
     
     SECURITY_TIER --> sentinel[🛡️ Azure Sentinel SIEM - $890/month]
     SECURITY_TIER --> keyvault[🔐 Telecom HSM FIPS 140-2 - $1890/month]
