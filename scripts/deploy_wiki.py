@@ -28,7 +28,7 @@ def deploy_wiki():
     
     # Configuration
     REPO_URL = "https://github.com/navidrast/cloudviz.wiki.git"
-    WIKI_SOURCE = "wiki"
+    WIKI_SOURCE = "docs/wiki"
     WIKI_TEMP = "temp_wiki_deploy"
     
     print("CloudViz Wiki Deployment Script")
