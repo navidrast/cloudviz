@@ -2,7 +2,7 @@
 
 This directory contains all CloudViz documentation organized by topic.
 
-## 📚 Documentation Structure
+## Documentation Structure
 
 ### Core Documentation
 - **[Installation Guide](wiki/Installation-Guide.md)** - Complete installation instructions for all platforms
@@ -18,7 +18,7 @@ This directory contains all CloudViz documentation organized by topic.
 ### Integrations
 - **[n8n Integration](wiki/n8n-Integration.md)** - n8n workflow automation integration
 
-## 🚀 Quick Links
+## Quick Links
 
 - **Getting Started**: Start with the [Quick Start Guide](wiki/Quick-Start.md)
 - **API Documentation**: Available at `http://localhost:8000/docs` when running

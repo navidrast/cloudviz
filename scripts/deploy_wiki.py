@@ -31,22 +31,22 @@ def deploy_wiki():
     WIKI_SOURCE = "wiki"
     WIKI_TEMP = "temp_wiki_deploy"
     
-    print("🚀 CloudViz Wiki Deployment Script")
+    print("CloudViz Wiki Deployment Script")
     print("=" * 50)
     
     # Check if wiki source exists
     if not os.path.exists(WIKI_SOURCE):
-        print(f"❌ Error: Wiki source directory '{WIKI_SOURCE}' not found!")
+        print(f"ERROR: Wiki source directory '{WIKI_SOURCE}' not found!")
         print("Make sure you're running this from the CloudViz repository root.")
         return False
     
     # List wiki files
     wiki_files = list(Path(WIKI_SOURCE).glob("*.md"))
-    print(f"📚 Found {len(wiki_files)} wiki files to deploy:")
+    print(f"Found {len(wiki_files)} wiki files to deploy:")
     for file in wiki_files:
         print(f"   - {file.name}")
     
-    print("\n🔄 Step 1: Cloning wiki repository...")
+    print("\nStep 1: Cloning wiki repository...")
     
     # Clean up any existing temp directory
     if os.path.exists(WIKI_TEMP):
@@ -55,14 +55,14 @@ def deploy_wiki():
     # Clone the wiki repository
     if not run_command(f"git clone {REPO_URL} {WIKI_TEMP}"):
         print("❌ Failed to clone wiki repository.")
-        print("📝 Note: If the wiki doesn't exist yet, you need to:")
+        print("NOTE: If the wiki doesn't exist yet, you need to:")
         print("   1. Go to https://github.com/navidrast/cloudviz/wiki")
         print("   2. Click 'Create the first page'")
         print("   3. Create a page titled 'Home'")
         print("   4. Then run this script again")
         return False
     
-    print("✅ Wiki repository cloned successfully!")
+    print("Wiki repository cloned successfully!")
     
     print("\n📁 Step 2: Copying wiki files...")
     
@@ -84,12 +84,12 @@ def deploy_wiki():
         
         if os.path.exists(source_path):
             shutil.copy2(source_path, dest_path)
-            print(f"   ✅ Copied {source_file} → {dest_file}")
+            print(f"   Copied {source_file} → {dest_file}")
             copied_files += 1
         else:
-            print(f"   ⚠️  Warning: {source_file} not found")
+            print(f"   WARNING: {source_file} not found")
     
-    print(f"\n📊 Copied {copied_files} files to wiki repository")
+    print(f"\nCopied {copied_files} files to wiki repository")
     
     print("\n🔄 Step 3: Committing and pushing changes...")
     
@@ -108,7 +108,7 @@ def deploy_wiki():
     # Check if there are changes to commit
     result = subprocess.run("git diff --cached --quiet", shell=True)
     if result.returncode == 0:
-        print("ℹ️  No changes to commit - wiki is already up to date!")
+        print("INFO: No changes to commit - wiki is already up to date!")
         os.chdir("..")
         shutil.rmtree(WIKI_TEMP)
         return True
@@ -125,17 +125,17 @@ def deploy_wiki():
         print("❌ Failed to push changes to wiki")
         return False
     
-    print("✅ Wiki deployed successfully!")
+    print("Wiki deployed successfully!")
     
     # Clean up
     os.chdir("..")
     shutil.rmtree(WIKI_TEMP)
     
-    print("\n🎉 Deployment Complete!")
+    print("\nDeployment Complete!")
     print("=" * 50)
     print("📖 Your wiki is now live at:")
     print("   https://github.com/navidrast/cloudviz/wiki")
-    print("\n📚 Available pages:")
+    print("\nAvailable pages:")
     for source_file in file_mapping.keys():
         if os.path.exists(os.path.join(WIKI_SOURCE, source_file)):
             page_name = source_file.replace('.md', '').replace('-', ' ')
