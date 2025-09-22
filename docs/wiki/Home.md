@@ -122,6 +122,12 @@ CloudViz is an enterprise-grade, multi-cloud infrastructure visualization platfo
 
 **Ready to visualize your cloud infrastructure?** Start with our [Quick Start Guide](Quick-Start) or explore the [API Reference](API-Reference) for advanced usage!
 
+## Support This Project
+
+If CloudViz has helped you manage your cloud infrastructure, consider supporting the project:
+
+[![Buy Me A Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](https://buymeacoffee.com/caveguru)
+
 ---
 
 *Last Updated: September 22, 2025*

@@ -725,6 +725,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Cloud integrations using official SDKs: [Azure SDK](https://azure.microsoft.com/en-us/downloads/), [AWS SDK](https://aws.amazon.com/tools/), [Google Cloud SDK](https://cloud.google.com/sdk)
 - Special thanks to the open-source community for their contributions
 
+## Support This Project
+
+If CloudViz has helped you visualize and manage your cloud infrastructure, consider supporting the project:
+
+[![Buy Me A Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](https://buymeacoffee.com/caveguru)
+
+Your support helps maintain and improve CloudViz for the entire community!
+
 ---
 
 **CloudViz - Professional multi-cloud infrastructure visualization for the enterprise**
