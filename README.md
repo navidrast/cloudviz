@@ -729,7 +729,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 If CloudViz has helped you visualize and manage your cloud infrastructure, consider supporting the project:
 
-[![Buy Me A Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](https://buymeacoffee.com/caveguru)
+<a href="https://buymeacoffee.com/caveguru" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 40px !important;width: 144px !important;" ></a>
 
 Your support helps maintain and improve CloudViz for the entire community!
 
