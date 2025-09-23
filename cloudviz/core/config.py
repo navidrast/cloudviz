@@ -46,13 +46,13 @@ class VisualizationConfig:
 @dataclass
 class APIConfig:
     """Configuration for API server."""
-    host: str = "0.0.0.0"
+    host: str = "127.0.0.1"  # Changed from 0.0.0.0 to localhost for security
     port: int = 8000
     workers: int = 4
     reload: bool = False
     log_level: str = "info"
     cors_enabled: bool = True
-    cors_origins: List[str] = field(default_factory=lambda: ["*"])
+    cors_origins: List[str] = field(default_factory=lambda: ["http://localhost:3000", "http://127.0.0.1:3000"])  # More secure default
     rate_limit_requests: int = 100
     rate_limit_window: int = 60
     max_request_size: int = 10485760  # 10MB
@@ -332,6 +332,12 @@ class CloudVizConfig:
         
         if self.api.workers < 1:
             errors.append("API workers must be at least 1")
+        
+        # Generate secure JWT secret if not provided
+        if not self.api.jwt_secret:
+            from cloudviz.core.utils.security import generate_random_token
+            self.api.jwt_secret = generate_random_token(32)
+            print("Warning: JWT secret not configured, generated a random one. Set CLOUDVIZ_JWT_SECRET environment variable for production.")
         
         # Validate provider configurations
         for provider_name, provider_config in self.providers.items():

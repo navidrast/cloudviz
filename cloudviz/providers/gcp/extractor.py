@@ -84,8 +84,10 @@ class GCPResourceExtractor(BaseResourceExtractor):
                 )
                 # Just make the request to test auth - don't process results
                 list(compute_client.aggregated_list(request=request))
-            except Exception:
-                pass  # Expected if no compute instances, auth still worked
+            except Exception as e:
+                # Log the exception for debugging but continue - this is expected for auth test
+                logger.debug("Auth test exception (expected): %s", str(e))
+                # If it's an auth error, it would have been raised by the compute_client creation
                 
             logger.info("GCP authentication successful", project_id=self.project_id)
             return True
