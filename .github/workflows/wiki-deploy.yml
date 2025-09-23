@@ -1,0 +1,52 @@
+name: Deploy Wiki
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'docs/wiki/**'
+      - 'wiki/**'
+      - '.github/workflows/wiki-deploy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy-wiki:
+    name: Deploy Wiki Content
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements/base.txt
+    
+    - name: Deploy wiki
+      run: |
+        python scripts/deploy_wiki.py
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+    
+    - name: Notify deployment status
+      if: always()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        channel: '#documentation'
+        text: "📚 Wiki deployment ${{ job.status }} for CloudViz"
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      continue-on-error: true
