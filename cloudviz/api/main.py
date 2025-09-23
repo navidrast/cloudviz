@@ -12,7 +12,8 @@ from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.security import HTTPBearer
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 import uvicorn
 
 from cloudviz.core.config import CloudVizConfig
@@ -109,6 +110,12 @@ def create_app(config: CloudVizConfig = None) -> FastAPI:
     app.include_router(aws_router, prefix="/api/v1", tags=["AWS"])
     app.include_router(gcp_router, prefix="/api/v1", tags=["GCP"])
     
+    # Mount static files for frontend
+    import os
+    static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "static")
+    if os.path.exists(static_dir):
+        app.mount("/static", StaticFiles(directory=static_dir), name="static")
+    
     return app
 
 
@@ -116,9 +123,31 @@ def create_app(config: CloudVizConfig = None) -> FastAPI:
 app = create_app()
 
 
-@app.get("/", response_model=Dict[str, Any])
-async def root():
-    """Root endpoint with API information."""
+@app.get("/")
+async def frontend():
+    """Serve the CloudViz frontend application."""
+    import os
+    frontend_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")
+    index_path = os.path.join(frontend_dir, "index.html")
+    
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    else:
+        # Fallback to API info if frontend not available
+        return {
+            "name": "CloudViz API",
+            "version": "1.0.0",
+            "description": "Multi-cloud infrastructure visualization platform",
+            "docs_url": "/docs",
+            "health_url": "/health",
+            "status": "operational",
+            "frontend_status": "not_installed"
+        }
+
+
+@app.get("/api", response_model=Dict[str, Any])
+async def api_info():
+    """API information endpoint."""
     return {
         "name": "CloudViz API",
         "version": "1.0.0",
