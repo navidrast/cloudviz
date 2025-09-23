@@ -3,15 +3,16 @@ API models for CloudViz REST API.
 Shared data models and enums used across API endpoints.
 """
 
-from typing import Dict, Any, Optional, List
 from datetime import datetime
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
 
 class JobStatus(str, Enum):
     """Job execution status."""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -21,6 +22,7 @@ class JobStatus(str, Enum):
 
 class JobResponse(BaseModel):
     """Generic job response model."""
+
     id: str
     status: JobStatus
     created_at: datetime
@@ -33,6 +35,7 @@ class JobResponse(BaseModel):
 
 class APIError(BaseModel):
     """API error response model."""
+
     error: str
     detail: str
     correlation_id: str
@@ -41,6 +44,7 @@ class APIError(BaseModel):
 
 class PaginatedResponse(BaseModel):
     """Paginated response wrapper."""
+
     items: List[Any]
     total: int
     page: int
@@ -50,6 +54,7 @@ class PaginatedResponse(BaseModel):
 
 class WebhookConfig(BaseModel):
     """Webhook configuration model."""
+
     url: str
     events: List[str]
     secret: Optional[str] = None
@@ -59,6 +64,7 @@ class WebhookConfig(BaseModel):
 
 class RateLimitInfo(BaseModel):
     """Rate limit information model."""
+
     requests_remaining: int
     reset_time: datetime
     window_seconds: int
@@ -66,6 +72,7 @@ class RateLimitInfo(BaseModel):
 
 class ExtractionRequest(BaseModel):
     """Base extraction request model."""
+
     regions: Optional[List[str]] = None
     resource_types: Optional[List[str]] = None
     filters: Optional[Dict[str, Any]] = None
@@ -74,6 +81,7 @@ class ExtractionRequest(BaseModel):
 
 class ExtractionResponse(BaseModel):
     """Base extraction response model."""
+
     job_id: str
     status: JobStatus
     message: str
@@ -83,6 +91,7 @@ class ExtractionResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     """Error response model."""
+
     error: str
     detail: str
     status_code: int

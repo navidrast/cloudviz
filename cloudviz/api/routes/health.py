@@ -3,17 +3,16 @@ Health check endpoints for CloudViz API.
 Provides system health monitoring and readiness checks.
 """
 
-from typing import Dict, Any
-from datetime import datetime
 import asyncio
+from datetime import datetime
+from typing import Any, Dict
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from cloudviz.api.dependencies import get_current_config
 from cloudviz.core.config import CloudVizConfig
 from cloudviz.core.utils import get_logger
-from cloudviz.api.dependencies import get_current_config
-
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -21,6 +20,7 @@ router = APIRouter()
 
 class HealthResponse(BaseModel):
     """Health check response model."""
+
     status: str
     timestamp: datetime
     version: str
@@ -30,6 +30,7 @@ class HealthResponse(BaseModel):
 
 class ReadinessResponse(BaseModel):
     """Readiness check response model."""
+
     ready: bool
     services: Dict[str, str]
     timestamp: datetime
@@ -47,29 +48,33 @@ async def health_check(config: CloudVizConfig = Depends(get_current_config)):
     """
     try:
         uptime = (datetime.now() - startup_time).total_seconds()
-        
+
         # Perform basic health checks
         checks = {
             "api": "healthy",
             "config": "healthy" if config else "unhealthy",
             "memory": "healthy",  # Could add actual memory checks
-            "disk": "healthy"     # Could add actual disk checks
+            "disk": "healthy",  # Could add actual disk checks
         }
-        
+
         # Determine overall status
-        status = "healthy" if all(check == "healthy" for check in checks.values()) else "degraded"
-        
+        status = (
+            "healthy"
+            if all(check == "healthy" for check in checks.values())
+            else "degraded"
+        )
+
         response = HealthResponse(
             status=status,
             timestamp=datetime.now(),
             version="1.0.0",
             uptime_seconds=uptime,
-            checks=checks
+            checks=checks,
         )
-        
+
         logger.debug("Health check completed", status=status, uptime=uptime)
         return response
-        
+
     except Exception as e:
         logger.error("Health check failed: %s", str(e), exc_info=True)
         raise HTTPException(status_code=503, detail="Health check failed")
@@ -83,41 +88,39 @@ async def readiness_check(config: CloudVizConfig = Depends(get_current_config)):
     """
     try:
         services = {}
-        
+
         # Check core services
         services["config"] = "ready" if config else "not_ready"
         services["logging"] = "ready"
-        
+
         # Check optional services
         try:
             # Could add database connectivity check
             services["database"] = "ready"
         except Exception:
             services["database"] = "not_ready"
-        
+
         try:
-            # Could add cache connectivity check  
+            # Could add cache connectivity check
             services["cache"] = "ready" if not config.cache.enabled else "not_ready"
         except Exception:
             services["cache"] = "not_ready"
-        
+
         # Determine overall readiness
         critical_services = ["config", "logging"]
         ready = all(services.get(svc) == "ready" for svc in critical_services)
-        
+
         response = ReadinessResponse(
-            ready=ready,
-            services=services,
-            timestamp=datetime.now()
+            ready=ready, services=services, timestamp=datetime.now()
         )
-        
+
         logger.debug("Readiness check completed", ready=ready, services=services)
-        
+
         if not ready:
             raise HTTPException(status_code=503, detail="Service not ready")
-            
+
         return response
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -142,12 +145,12 @@ async def startup_check():
     """
     # Simple startup check - could be enhanced with actual startup tasks
     uptime = (datetime.now() - startup_time).total_seconds()
-    
+
     # Consider startup complete after 10 seconds
     startup_complete = uptime > 10
-    
+
     return {
         "status": "started" if startup_complete else "starting",
         "uptime_seconds": uptime,
-        "timestamp": datetime.now()
+        "timestamp": datetime.now(),
     }
