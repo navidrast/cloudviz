@@ -1,0 +1,115 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  validate-commit:
+    name: Validate Commit Messages
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Validate commit messages
+      uses: wagoid/commitlint-github-action@v6
+      with:
+        configFile: '.commitlintrc.json'
+      continue-on-error: true
+
+  license-scan:
+    name: License Compatibility Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install license scanner
+      run: |
+        pip install pip-licenses
+    
+    - name: Scan licenses
+      run: |
+        pip install -r requirements/base.txt
+        pip-licenses --format=json --output-file=licenses.json
+        pip-licenses --format=markdown --output-file=licenses.md
+    
+    - name: Upload license reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: license-reports
+        path: |
+          licenses.json
+          licenses.md
+
+  code-complexity:
+    name: Code Complexity Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install analysis tools
+      run: |
+        pip install radon xenon
+    
+    - name: Run complexity analysis
+      run: |
+        radon cc cloudviz/ --json > complexity-report.json
+        radon mi cloudviz/ --json > maintainability-report.json
+        xenon --max-absolute B --max-modules A --max-average A cloudviz/
+      continue-on-error: true
+    
+    - name: Upload complexity reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: complexity-reports
+        path: |
+          complexity-report.json
+          maintainability-report.json
+
+  ossf-scorecard:
+    name: OSSF Scorecard Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      id-token: write
+      contents: read
+      actions: read
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+    
+    - name: Run OSSF Scorecard
+      uses: ossf/scorecard-action@v2.4.0
+      with:
+        results_file: results.sarif
+        results_format: sarif
+        publish_results: true
+    
+    - name: Upload OSSF Scorecard results
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: results.sarif
