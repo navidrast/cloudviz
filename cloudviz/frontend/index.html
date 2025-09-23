@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CloudViz - Multi-Cloud Infrastructure Visualization</title>
+    
+    <!-- Local CSS -->
+    <link href="/static/css/app.css" rel="stylesheet">
+    
+    <style>
+        /* Additional custom styles */
+        .navbar-brand {
+            font-weight: 600;
+        }
+        
+        /* Loading animation */
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #0d6efd;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Toast styles */
+        .toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1100;
+        }
+        
+        .toast {
+            background-color: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 0.375rem;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            max-width: 350px;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        
+        .toast.toast-success {
+            border-left: 4px solid #198754;
+        }
+        
+        .toast.toast-error {
+            border-left: 4px solid #dc3545;
+        }
+        
+        .toast.toast-warning {
+            border-left: 4px solid #ffc107;
+        }
+        
+        .toast.toast-info {
+            border-left: 4px solid #0dcaf0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <span class="bi-cloud-arrow-up me-2"></span>CloudViz
+            </a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text">
+                    <span class="bi-circle-fill text-success me-1"></span>
+                    <span id="connection-status">Connected</span>
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid py-4">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3">
+                <!-- Cloud Provider Setup -->
+                <div class="card section-card">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <span class="bi-gear me-2"></span>Cloud Providers
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Azure Provider -->
+                        <div class="provider-card" data-provider="azure">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">
+                                        <span class="bi-microsoft text-primary me-2"></span>Azure
+                                    </h6>
+                                    <small class="text-muted">Microsoft Azure</small>
+                                </div>
+                                <span class="badge status-badge bg-secondary" id="azure-status">Not Configured</span>
+                            </div>
+                        </div>
+
+                        <!-- AWS Provider -->
+                        <div class="provider-card" data-provider="aws">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">
+                                        <span class="bi-amazon text-warning me-2"></span>AWS
+                                    </h6>
+                                    <small class="text-muted">Amazon Web Services</small>
+                                </div>
+                                <span class="badge status-badge bg-secondary" id="aws-status">Not Configured</span>
+                            </div>
+                        </div>
+
+                        <!-- GCP Provider -->
+                        <div class="provider-card" data-provider="gcp">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">
+                                        <span class="bi-google text-danger me-2"></span>GCP
+                                    </h6>
+                                    <small class="text-muted">Google Cloud Platform</small>
+                                </div>
+                                <span class="badge status-badge bg-secondary" id="gcp-status">Not Configured</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scan Controls -->
+                <div class="card section-card">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <span class="bi-search me-2"></span>Resource Discovery
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-primary scan-button" id="scan-all">
+                                <span class="bi-cloud-check me-2"></span>Scan All Clouds
+                            </button>
+                            <button class="btn btn-outline-primary scan-button" id="scan-azure">
+                                <span class="bi-microsoft me-2"></span>Scan Azure
+                            </button>
+                            <button class="btn btn-outline-primary scan-button" id="scan-aws">
+                                <span class="bi-amazon me-2"></span>Scan AWS
+                            </button>
+                            <button class="btn btn-outline-primary scan-button" id="scan-gcp">
+                                <span class="bi-google me-2"></span>Scan GCP
+                            </button>
+                        </div>
+                        
+                        <!-- Progress Indicators -->
+                        <div class="progress-container mt-3">
+                            <div class="progress mb-2">
+                                <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <small class="text-muted">
+                                <span id="progress-text">Ready to scan...</span>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Export Controls -->
+                <div class="card section-card">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <span class="bi-download me-2"></span>Export & Share
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Format:</label>
+                            <select class="form-select" id="export-format">
+                                <option value="svg">SVG (Vector)</option>
+                                <option value="png">PNG (Image)</option>
+                                <option value="pdf">PDF (Document)</option>
+                                <option value="mermaid">Mermaid (Code)</option>
+                            </select>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-success" id="download-diagram">
+                                <span class="bi-download me-2"></span>Download
+                            </button>
+                            <button class="btn btn-outline-info" id="share-link">
+                                <span class="bi-share me-2"></span>Share Link
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9">
+                <!-- Resource Summary -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h4 class="text-primary" id="total-resources">0</h4>
+                                <small class="text-muted">Total Resources</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h4 class="text-success" id="total-cost">$0</h4>
+                                <small class="text-muted">Monthly Cost</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h4 class="text-warning" id="total-regions">0</h4>
+                                <small class="text-muted">Regions</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h4 class="text-info" id="last-scan">Never</h4>
+                                <small class="text-muted">Last Scan</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs for Main Content -->
+                <ul class="nav nav-tabs" id="main-tabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link active" id="diagram-tab" href="#diagram-pane" role="tab">
+                            <span class="bi-diagram-3 me-2"></span>Infrastructure Diagram
+                        </a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link" id="costs-tab" href="#costs-pane" role="tab">
+                            <span class="bi-graph-up me-2"></span>Cost Analytics
+                        </a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link" id="settings-tab" href="#settings-pane" role="tab">
+                            <span class="bi-gear me-2"></span>Settings
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="main-tab-content">
+                    <!-- Diagram Tab -->
+                    <div class="tab-pane show active" id="diagram-pane" role="tabpanel">
+                        <div class="card section-card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Infrastructure Visualization</h5>
+                                <div>
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-sm btn-outline-secondary" id="zoom-in">
+                                            <span class="bi-zoom-in"></span>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" id="zoom-out">
+                                            <span class="bi-zoom-out"></span>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" id="reset-zoom">
+                                            <span class="bi-arrows-fullscreen"></span>
+                                        </button>
+                                    </div>
+                                    <select class="form-select form-select-sm d-inline-block w-auto ms-2" id="theme-selector">
+                                        <option value="default">Default Theme</option>
+                                        <option value="dark">Dark Theme</option>
+                                        <option value="forest">Forest Theme</option>
+                                        <option value="neutral">Neutral Theme</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="diagram-container p-3" id="diagram-display">
+                                    <div class="text-center text-muted py-5">
+                                        <div class="bi-cloud-slash display-1"></div>
+                                        <h5 class="mt-3">No Infrastructure Data</h5>
+                                        <p>Configure your cloud providers and run a scan to visualize your infrastructure.</p>
+                                        <button class="btn btn-primary" onclick="showTab('settings-tab')">
+                                            <span class="bi-gear me-2"></span>Configure Providers
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Costs Tab -->
+                    <div class="tab-pane" id="costs-pane" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card section-card">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">Cost Breakdown by Provider</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="cost-chart-container text-center">
+                                            <div class="text-muted py-5">
+                                                <div class="bi-graph-up display-4"></div>
+                                                <p class="mt-2">Cost data will appear here after scanning</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card section-card">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">Monthly Spending Trend</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="cost-chart-container text-center">
+                                            <div class="text-muted py-5">
+                                                <div class="bi-graph-up display-4"></div>
+                                                <p class="mt-2">Trend data will appear here after scanning</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card section-card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Cost Optimization Recommendations</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="recommendations-list">
+                                    <div class="text-center text-muted py-3">
+                                        <div class="bi-lightbulb display-4"></div>
+                                        <p class="mt-2">Run a scan to get cost optimization recommendations.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Settings Tab -->
+                    <div class="tab-pane" id="settings-pane" role="tabpanel">
+                        <!-- Azure Credentials Form -->
+                        <div class="card section-card credential-form active" id="azure-form">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0">
+                                    <span class="bi-microsoft me-2"></span>Azure Configuration
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="azure-credentials">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Tenant ID *</label>
+                                                <input type="text" class="form-control" name="tenant_id" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Client ID *</label>
+                                                <input type="text" class="form-control" name="client_id" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Client Secret *</label>
+                                        <input type="password" class="form-control" name="client_secret" placeholder="Enter client secret" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Subscription IDs (comma-separated)</label>
+                                        <input type="text" class="form-control" name="subscription_ids" placeholder="sub1,sub2,sub3">
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary">
+                                            <span class="bi-check-circle me-2"></span>Save Configuration
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary" onclick="testConnection('azure')">
+                                            <span class="bi-plug me-2"></span>Test Connection
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- AWS Credentials Form -->
+                        <div class="card section-card credential-form" id="aws-form">
+                            <div class="card-header bg-warning text-dark">
+                                <h5 class="mb-0">
+                                    <span class="bi-amazon me-2"></span>AWS Configuration
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="aws-credentials">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Access Key ID *</label>
+                                                <input type="text" class="form-control" name="access_key_id" placeholder="AKIAIOSFODNN7EXAMPLE" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Secret Access Key *</label>
+                                                <input type="password" class="form-control" name="secret_access_key" placeholder="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Regions (comma-separated)</label>
+                                        <input type="text" class="form-control" name="regions" placeholder="us-east-1,us-west-2,eu-west-1" value="us-east-1">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Session Token (optional)</label>
+                                        <input type="password" class="form-control" name="session_token" placeholder="For temporary credentials">
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-warning text-dark">
+                                            <span class="bi-check-circle me-2"></span>Save Configuration
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary" onclick="testConnection('aws')">
+                                            <span class="bi-plug me-2"></span>Test Connection
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- GCP Credentials Form -->
+                        <div class="card section-card credential-form" id="gcp-form">
+                            <div class="card-header bg-danger text-white">
+                                <h5 class="mb-0">
+                                    <span class="bi-google me-2"></span>GCP Configuration
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="gcp-credentials">
+                                    <div class="mb-3">
+                                        <label class="form-label">Project ID *</label>
+                                        <input type="text" class="form-control" name="project_id" placeholder="my-project-id" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Service Account JSON *</label>
+                                        <textarea class="form-control" name="service_account_json" rows="10" placeholder="Paste your service account JSON here..." required></textarea>
+                                        <div class="form-text">
+                                            Download the service account key from the Google Cloud Console and paste the JSON content here.
+                                        </div>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-danger">
+                                            <span class="bi-check-circle me-2"></span>Save Configuration
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary" onclick="testConnection('gcp')">
+                                            <span class="bi-plug me-2"></span>Test Connection
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Local JavaScript -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
