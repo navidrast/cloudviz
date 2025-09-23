@@ -8,8 +8,8 @@ from .factory import AWSResourceFactory
 from .models import AWSResource, AWSSubscription
 
 __all__ = [
-    'AWSResourceExtractor',
-    'AWSResourceFactory', 
-    'AWSResource',
-    'AWSSubscription'
+    "AWSResourceExtractor",
+    "AWSResourceFactory",
+    "AWSResource",
+    "AWSSubscription",
 ]
