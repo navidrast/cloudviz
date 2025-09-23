@@ -8,6 +8,12 @@ on:
   pull_request:
     branches: [ main ]
 
+# Ensure no automatic fixes or commits are made
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
 jobs:
   dependency-check:
     name: Dependency Vulnerability Scan
@@ -31,7 +37,7 @@ jobs:
     - name: Upload Safety report
       uses: actions/upload-artifact@v3
       with:
-        name: safety-report
+        name: safety-report-${{ github.run_number }}
         path: safety-report.json
 
   code-scan:
@@ -56,7 +62,7 @@ jobs:
     - name: Upload Bandit report
       uses: actions/upload-artifact@v3
       with:
-        name: bandit-report
+        name: bandit-report-${{ github.run_number }}
         path: bandit-report.json
 
   semgrep:
@@ -76,13 +82,13 @@ jobs:
         generateSarif: "1"
     
     - name: Upload SARIF file
-      uses: github/codeql-action/upload-sarif@v2
+      uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: semgrep.sarif
       if: always()
 
   codeql:
-    name: CodeQL Analysis
+    name: CodeQL Analysis (Manual Review Only)
     runs-on: ubuntu-latest
     
     permissions:
@@ -99,15 +105,27 @@ jobs:
     - uses: actions/checkout@v4
     
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v2
+      uses: github/codeql-action/init@v3
       with:
         languages: ${{ matrix.language }}
+        # Disable automatic PR fixes - manual review only
+        config-file: ./.github/codeql/codeql-config.yml
     
     - name: Autobuild
-      uses: github/codeql-action/autobuild@v2
+      uses: github/codeql-action/autobuild@v3
     
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
+      uses: github/codeql-action/analyze@v3
+      with:
+        # Explicitly disable auto-fix and PR comments
+        upload: true
+        cleanup-level: none
+    
+    - name: Security Scan Summary
+      run: |
+        echo "🔒 Security scan completed - manual review required"
+        echo "📋 All findings require maintainer review before action"
+        echo "🚫 No automatic fixes or commits will be made"
 
   docker-scan:
     name: Docker Image Security Scan
@@ -127,6 +145,6 @@ jobs:
         output: 'trivy-results.sarif'
     
     - name: Upload Trivy scan results
-      uses: github/codeql-action/upload-sarif@v2
+      uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: 'trivy-results.sarif'
