@@ -1,0 +1,42 @@
+# CodeQL Configuration for CloudViz
+# Manual review only - no automatic fixes or PR comments
+
+name: "CloudViz Security Analysis"
+
+# Disable automatic PR fixes and comments
+disable-default-path-filters: false
+
+# Security-focused query suites
+queries:
+  - uses: security-extended
+  - uses: security-and-quality
+
+# Paths to analyze
+paths:
+  - cloudviz/
+  - scripts/
+
+# Paths to ignore during analysis
+paths-ignore:
+  - tests/
+  - docs/
+  - examples/
+  - "*.md"
+  - "*.txt"
+  - "*.json"
+  - "*.yml"
+  - "*.yaml"
+
+# Python-specific configuration
+python:
+  # Focus on security vulnerabilities
+  queries:
+    - uses: security-extended
+  
+  # Include only production code paths
+  paths:
+    - cloudviz/
+
+# Ensure no automatic commits or PR modifications
+external-repository-token: ""
+upload-database: false
