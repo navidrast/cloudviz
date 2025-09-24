@@ -551,16 +551,11 @@ uvicorn cloudviz.api.main:app --reload --host 0.0.0.0 --port 8000
 # Run all tests
 pytest
 
-# Run specific test categories
+# Run unit tests
 pytest tests/unit/
-pytest tests/integration/
-pytest tests/api/
 
 # Run tests with coverage
 pytest --cov=cloudviz --cov-report=html
-
-# Run performance tests
-pytest tests/performance/ -v
 ```
 
 ### Project Structure
@@ -585,9 +580,7 @@ cloudviz/
 │   ├── layouts.py         # Layout algorithms
 │   └── themes.py          # Visual themes
 ├── tests/                  # Test suite
-│   ├── unit/              # Unit tests
-│   ├── integration/       # Integration tests
-│   └── fixtures/          # Test fixtures
+│   └── unit/              # Unit tests
 ├── docs/                   # Documentation
 ├── examples/              # Usage examples
 └── scripts/               # Utility scripts
