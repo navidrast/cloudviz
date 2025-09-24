@@ -3,6 +3,7 @@ Authentication endpoints for CloudViz API.
 Handles JWT-based authentication and user management.
 """
 
+import os
 from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
 
@@ -56,30 +57,64 @@ class TokenValidationResponse(BaseModel):
     expires_at: Optional[datetime] = None
 
 
-# Mock user database - In production, this would be a real database
-MOCK_USERS = {
-    "admin": {
-        "username": "admin",
-        "password_hash": hash_string("admin123"),  # In production, use proper hashing
-        "email": "admin@cloudviz.com",
-        "roles": ["admin", "operator", "viewer"],
-        "permissions": ["extract", "render", "admin", "view"]
-    },
-    "operator": {
-        "username": "operator", 
-        "password_hash": hash_string("operator123"),
-        "email": "operator@cloudviz.com",
-        "roles": ["operator", "viewer"],
-        "permissions": ["extract", "render", "view"]
-    },
-    "viewer": {
-        "username": "viewer",
-        "password_hash": hash_string("viewer123"),
-        "email": "viewer@cloudviz.com", 
-        "roles": ["viewer"],
-        "permissions": ["view"]
+def _get_mock_users() -> Dict[str, Dict[str, Any]]:
+    """
+    Get mock users configuration from environment variables.
+    In production, this would be a real database.
+    """
+    # Get passwords from environment variables, with fallback warnings
+    admin_password = os.getenv("CLOUDVIZ_ADMIN_PASSWORD")
+    operator_password = os.getenv("CLOUDVIZ_OPERATOR_PASSWORD") 
+    viewer_password = os.getenv("CLOUDVIZ_VIEWER_PASSWORD")
+    
+    if not admin_password:
+        logger.warning(
+            "CLOUDVIZ_ADMIN_PASSWORD not set. Using default password for demo purposes. "
+            "Set CLOUDVIZ_ADMIN_PASSWORD environment variable in production."
+        )
+        admin_password = "admin123"
+    
+    if not operator_password:
+        logger.warning(
+            "CLOUDVIZ_OPERATOR_PASSWORD not set. Using default password for demo purposes. "
+            "Set CLOUDVIZ_OPERATOR_PASSWORD environment variable in production."
+        )
+        operator_password = "operator123"
+    
+    if not viewer_password:
+        logger.warning(
+            "CLOUDVIZ_VIEWER_PASSWORD not set. Using default password for demo purposes. "
+            "Set CLOUDVIZ_VIEWER_PASSWORD environment variable in production."
+        )
+        viewer_password = "viewer123"
+    
+    return {
+        "admin": {
+            "username": "admin",
+            "password_hash": hash_string(admin_password),
+            "email": "admin@cloudviz.com",
+            "roles": ["admin", "operator", "viewer"],
+            "permissions": ["extract", "render", "admin", "view"]
+        },
+        "operator": {
+            "username": "operator", 
+            "password_hash": hash_string(operator_password),
+            "email": "operator@cloudviz.com",
+            "roles": ["operator", "viewer"],
+            "permissions": ["extract", "render", "view"]
+        },
+        "viewer": {
+            "username": "viewer",
+            "password_hash": hash_string(viewer_password),
+            "email": "viewer@cloudviz.com", 
+            "roles": ["viewer"],
+            "permissions": ["view"]
+        }
     }
-}
+
+
+# Mock user database - In production, this would be a real database
+MOCK_USERS = _get_mock_users()
 
 
 def authenticate_user(username: str, password: str) -> Optional[Dict[str, Any]]:
@@ -101,7 +136,16 @@ def get_current_user(
     """Get current authenticated user from JWT token."""
     try:
         token = credentials.credentials
-        payload = validate_token(token, config.api.jwt_secret or "default-secret")
+        jwt_secret = config.api.jwt_secret
+        
+        if not jwt_secret:
+            logger.error("JWT secret not configured. Set CLOUDVIZ_JWT_SECRET environment variable.")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Authentication service misconfigured"
+            )
+        
+        payload = validate_token(token, jwt_secret)
         
         username = payload.get("sub")
         if not username:
@@ -145,6 +189,15 @@ async def login(
             )
         
         # Generate JWT token
+        jwt_secret = config.api.jwt_secret
+        
+        if not jwt_secret:
+            logger.error("JWT secret not configured. Set CLOUDVIZ_JWT_SECRET environment variable.")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Authentication service misconfigured"
+            )
+        
         token_data = {
             "sub": user["username"],
             "roles": user["roles"],
@@ -153,7 +206,7 @@ async def login(
             "exp": datetime.utcnow() + timedelta(hours=config.api.jwt_expiration // 3600)
         }
         
-        access_token = generate_token(token_data, config.api.jwt_secret or "default-secret")
+        access_token = generate_token(token_data, jwt_secret)
         
         # Update last login
         user["last_login"] = datetime.now()
